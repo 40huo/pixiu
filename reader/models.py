@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # __author__ = '40huo'
 
+from django.contrib.auth.models import User
 from django.db import models
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -99,3 +100,18 @@ class Spider(models.Model):
 
     def __str__(self):
         return self.name
+
+
+@python_2_unicode_compatible
+class UserProfile(models.Model):
+    """
+    用户信息
+    """
+    # 由 User model 继承而来
+    user = models.OneToOneField(User)
+
+    # 昵称
+    nickname = models.CharField('昵称', max_length=64)
+
+    def __str__(self):
+        return self.nickname
