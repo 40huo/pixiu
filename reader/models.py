@@ -96,3 +96,6 @@ class Spider(models.Model):
     爬虫类型
     """
     name = models.CharField
+
+    def __str__(self):
+        return self.name
