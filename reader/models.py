@@ -8,6 +8,28 @@ from django.utils.encoding import python_2_unicode_compatible
 
 # Create your models here.
 @python_2_unicode_compatible
+class IntelligenceCategory(models.Model):
+    """
+    情报分类
+    """
+    name = models.CharField('分类', max_length=64)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
+class IntelligenceTag(models.Model):
+    """
+    情报标签
+    """
+    name = models.CharField('标签', max_length=64)
+
+    def __str__(self):
+        return self.name
+
+
+@python_2_unicode_compatible
 class Intelligence(models.Model):
     """
     威胁情报内容
@@ -34,28 +56,6 @@ class Intelligence(models.Model):
 
     def __str__(self):
         return self.title
-
-
-@python_2_unicode_compatible
-class IntelligenceCategory(models.Model):
-    """
-    情报分类
-    """
-    name = models.CharField('分类', max_length=64)
-
-    def __str__(self):
-        return self.name
-
-
-@python_2_unicode_compatible
-class IntelligenceTag(models.Model):
-    """
-    情报标签
-    """
-    name = models.CharField('标签', max_length=64)
-
-    def __str__(self):
-        return self.name
 
 
 @python_2_unicode_compatible
