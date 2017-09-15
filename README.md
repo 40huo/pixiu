@@ -1,2 +1,2 @@
-# Pi Xiu
+# Pixiu
 Personal RSS reader based on Django.
