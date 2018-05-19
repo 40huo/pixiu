@@ -45,7 +45,7 @@ class Intelligence(models.Model):
     # 修改时间
     last_modify_time = models.DateTimeField('修改时间', auto_now=True)
     # 分类
-    category = models.ForeignKey(IntelligenceCategory)
+    category = models.ForeignKey(IntelligenceCategory, on_delete=models.CASCADE)
     # 标签
     tag = models.ManyToManyField(IntelligenceTag, blank=True)
 
@@ -85,7 +85,7 @@ class IntelligenceResource(models.Model):
     last_refresh_time = models.DateTimeField('上次刷新时间', auto_now=True)
     create_time = models.DateTimeField('创建时间', auto_now_add=True)
     # 分类
-    category = models.ForeignKey(ResourceCategory)
+    category = models.ForeignKey(ResourceCategory, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
@@ -108,7 +108,7 @@ class UserProfile(models.Model):
     用户信息
     """
     # 由 User model 继承而来
-    user = models.OneToOneField(User)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
 
     # 昵称
     nickname = models.CharField('昵称', max_length=64)
