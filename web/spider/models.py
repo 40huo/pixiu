@@ -17,6 +17,11 @@ class Spider(models.Model):
     create_time = models.DateTimeField(verbose_name='创建时间', default=timezone.now)
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
     is_enabled = models.BooleanField(verbose_name='是否启用', default=True)
+    is_default = models.BooleanField(verbose_name='是否默认', default=False)
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = '爬虫'
+        verbose_name_plural = verbose_name

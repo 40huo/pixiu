@@ -1,7 +1,12 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+
+from .models import Article
 
 
 # Create your views here.
 def index(request):
-    return HttpResponse('Hello this is pixiu!')
+    article_list = Article.objects.order_by('-pub_time')
+    context = {
+        'article_list': article_list,
+    }
+    return render(request=request, template_name='index.html', context=context)

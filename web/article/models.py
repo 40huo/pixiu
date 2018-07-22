@@ -48,6 +48,14 @@ class Article(models.Model):
     content = models.TextField(verbose_name='文章内容', blank=True)
     pub_time = models.DateTimeField(verbose_name='发布时间', default=timezone.now)
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
-    category = models.ForeignKey(to=ArticleCategory, on_delete=models.CASCADE)
-    tag = models.ManyToManyField(to=ArticleTag, blank=True)
+    category = models.ForeignKey(to=ArticleCategory, verbose_name='分类', on_delete=models.CASCADE)
+    tag = models.ManyToManyField(to=ArticleTag, verbose_name='标签', blank=True)
+
     # source = models.ForeignKey(to=Source, )
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = '文章'
+        verbose_name_plural = verbose_name

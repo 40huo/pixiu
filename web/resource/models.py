@@ -36,6 +36,10 @@ class ResourceCategory(models.Model):
     def __str__(self):
         return self.name
 
+    class Meta:
+        verbose_name = '订阅源分类'
+        verbose_name_plural = verbose_name
+
 
 # Create your models here.
 @python_2_unicode_compatible
@@ -63,7 +67,7 @@ class Source(models.Model):
     description = models.TextField(verbose_name='描述', default='暂无')
     author = models.CharField(verbose_name='作者', max_length=64, default='Admin')
     spider_type = models.ForeignKey(to=Spider, verbose_name='爬虫类型', on_delete=models.SET_DEFAULT, default=get_default_spider)
-    refresh_gap = models.PositiveSmallIntegerField(verbose_name='刷新间隔', max_length=10, default=60)
+    refresh_gap = models.PositiveSmallIntegerField(verbose_name='刷新间隔', default=60)  # 单位 小时
     refresh_status = models.PositiveSmallIntegerField(verbose_name='刷新状态', choices=REFRESH_STATUS_CHOICES)
     last_refresh_time = models.DateTimeField(verbose_name='上次刷新时间', auto_now=True)
 
@@ -75,3 +79,7 @@ class Source(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        verbose_name = '订阅源'
+        verbose_name_plural = verbose_name
