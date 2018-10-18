@@ -10,7 +10,17 @@ def get_default_spider():
     返回默认的爬虫类型
     :return:
     """
-    return Spider.objects.get(is_default=True)
+    default, _ = Spider.objects.get_or_create(
+        is_default=True,
+        defaults={
+            'name': 'RSS',
+            'description': 'RSS',
+            'filename': 'rss',
+            'author': '',
+            'is_default': True
+        }
+    )
+    return default.id
 
 
 def get_default_category():
@@ -18,7 +28,15 @@ def get_default_category():
     返回默认订阅源分类
     :return:
     """
-    return ResourceCategory.objects.get(is_default=True)
+    default, _ = ResourceCategory.objects.get_or_create(
+        is_default=True,
+        defaults={
+            'name': '默认',
+            'description': '默认分类',
+            'is_default': True
+        }
+    )
+    return default.id
 
 
 @python_2_unicode_compatible
@@ -43,7 +61,7 @@ class ResourceCategory(models.Model):
 
 # Create your models here.
 @python_2_unicode_compatible
-class Source(models.Model):
+class Resource(models.Model):
     """
     订阅源
     """
