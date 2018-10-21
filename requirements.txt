@@ -1,2 +1,5 @@
 django
-scrapy
+aiohttp
+coloredlogs
+lxml
+beautifulsoup4

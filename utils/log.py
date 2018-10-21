@@ -4,12 +4,13 @@ import os
 
 
 class Logger(object):
-    def __init__(self, logger):
+    def __init__(self, logger, filename='logs/pixiu.log'):
         """
         封装一个log类，用来统一获取logger
         :param logger: 传入logger名称，可用__name__代替
         """
-        log_file = 'log/pixiu.log'
+        project_path = os.path.dirname(os.path.dirname(__file__))
+        log_file = os.path.join(project_path, filename)
         log_dir = os.path.split(log_file)[0]
         if not os.path.exists(log_dir):
             os.mkdir(log_dir)
@@ -43,17 +44,19 @@ class Logger(object):
                 },
                 'file': {
                     'level': 'DEBUG',
-                    'class': 'cloghandler.ConcurrentRotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'format_for_file',
                     'filename': log_file,
                     'encoding': 'utf-8',
-                    'delay': True,
-                    'maxBytes': 1024 * 1024 * 100,
+                    'maxBytes': 1024 * 1024 * 5,
                     'backupCount': 5
                 }
             },
         }
         logging.config.dictConfig(logging_dict)
+
+        # 减少无用日志
+        logging.getLogger('chardet').setLevel(logging.WARNING)
 
         logger = logging.getLogger(logger)
         self.logger = logger
