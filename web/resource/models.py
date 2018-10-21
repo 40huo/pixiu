@@ -59,7 +59,6 @@ class ResourceCategory(models.Model):
         verbose_name_plural = verbose_name
 
 
-# Create your models here.
 @python_2_unicode_compatible
 class Resource(models.Model):
     """

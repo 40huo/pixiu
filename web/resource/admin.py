@@ -6,9 +6,9 @@ from web.resource.models import ResourceCategory, Resource
 # Register your models here.
 @admin.register(ResourceCategory)
 class ResourceCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name', 'description', 'create_time', 'update_time', 'is_default')
+    list_display = [field.name for field in ResourceCategory._meta.fields if field.name != "id"]
 
 
 @admin.register(Resource)
 class SourceAdmin(admin.ModelAdmin):
-    list_display = ('name', 'link', 'author', 'spider_type', 'refresh_gap', 'refresh_status', 'last_refresh_time', 'category', 'level', 'is_open', 'is_deleted')
+    list_display = [field.name for field in Resource._meta.fields if field.name != "id"]

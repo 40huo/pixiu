@@ -1,13 +1,11 @@
-# -*- coding: utf-8 -*-
-# __author__ = '40huo'
-
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from django.utils.encoding import python_2_unicode_compatible
 
+from web.resource.models import Resource
 
-# Create your models here.
+
 @python_2_unicode_compatible
 class ArticleCategory(models.Model):
     """
@@ -50,8 +48,7 @@ class Article(models.Model):
     update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
     category = models.ForeignKey(to=ArticleCategory, verbose_name='分类', on_delete=models.CASCADE)
     tag = models.ManyToManyField(to=ArticleTag, verbose_name='标签', blank=True)
-
-    # source = models.ForeignKey(to=Source, )
+    source = models.ForeignKey(to=Resource, verbose_name='订阅源', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.title
