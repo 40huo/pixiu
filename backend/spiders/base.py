@@ -40,9 +40,10 @@ class BaseSpider(object):
         except UnicodeDecodeError:
             self.logger.error(f'Decode error: {url}')
 
-    def save(self):
+    def save(self, data: dict):
         """
         存储数据库
+        :param data: 需要存入队列的数据
         :return:
         """
         raise NotImplementedError('Spider must customize save method!')

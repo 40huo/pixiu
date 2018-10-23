@@ -5,8 +5,10 @@ import urllib.parse
 import aiohttp
 from lxml import etree
 
-from spiders.base import BaseSpider
+from backend.save import ARTICLE_QUEUE
+from backend.spiders.base import BaseSpider
 from utils.log import Logger
+from backend.pipelines.html_clean import html_clean
 
 
 class TuguaSpider(BaseSpider):
@@ -30,9 +32,12 @@ class TuguaSpider(BaseSpider):
         if article_html:
             selector = etree.HTML(article_html)
 
-            tugua_title = selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[1]/td/div/span/span/a[2]/text()')[0]
-            tugua_content = etree.tounicode(selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[1]')[0], method='html')
-            publish_time = selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/table[1]/tbody/tr/td/div/span/text()')[0]
+            tugua_title = \
+                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[1]/td/div/span/span/a[2]/text()')[0]
+            tugua_content = etree.tounicode(
+                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[1]')[0], method='html')
+            publish_time = selector.xpath(
+                '/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/table[1]/tbody/tr/td/div/span/text()')[0]
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
 
             return {
@@ -58,19 +63,24 @@ class TuguaSpider(BaseSpider):
             detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
             return detail_links
 
-    def save(self):
+    @asyncio.coroutine
+    async def save(self, data: dict):
         """
         存储
         :return:
         """
-        pass
+        await ARTICLE_QUEUE.put(item=data)
 
     @asyncio.coroutine
     async def run(self):
         async with aiohttp.ClientSession() as session:
             article_links = await self.parse_link(self.init_url, session, max_count=10)
-            for link in article_links:
-                print(await self.parse_article(link, session))
+            tasks = [self.parse_article(link, session) for link in article_links]
+            for coro in asyncio.as_completed(tasks):
+                data = await coro
+                data['content'] = html_clean(data['content'])
+                self.logger.debug(data)
+                await self.save(data=data)
 
 
 if __name__ == '__main__':
