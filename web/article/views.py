@@ -1,12 +1,22 @@
-from django.shortcuts import render
+from rest_framework import mixins
+from rest_framework import viewsets
 
-from .models import Article
+from .models import Article, ArticleCategory
+from .serializers import ArticleSerializer, ArticleCategorySerializer
 
 
 # Create your views here.
-def index(request):
-    article_list = Article.objects.order_by('-pub_time')
-    context = {
-        'article_list': article_list,
-    }
-    return render(request=request, template_name='index.html', context=context)
+class ArticleListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """
+    文章列表
+    """
+    queryset = Article.objects.all().order_by('pub_time')
+    serializer_class = ArticleSerializer
+
+
+class ArticleCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    """
+    文章分类
+    """
+    queryset = ArticleCategory.objects.all()
+    serializer_class = ArticleCategorySerializer

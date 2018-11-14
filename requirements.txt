@@ -1,3 +1,5 @@
+djangorestframework
+apscheduler
 django
 aiohttp
 coloredlogs

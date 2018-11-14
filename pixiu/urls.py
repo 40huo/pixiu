@@ -18,8 +18,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from rest_framework import routers
+
+from web.article.views import ArticleListViewSet, ArticleCategoryViewSet
+
+router = routers.DefaultRouter()
+router.register(r'article', ArticleListViewSet, base_name="article")
+router.register(r'article-category', ArticleCategoryViewSet, base_name="article-category")
 
 urlpatterns = [
+    path('api/', include(router.urls)),
+
     path('admin/', admin.site.urls),
-    path('', include('web.article.urls')),
+    path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
