@@ -5,10 +5,10 @@ import urllib.parse
 import aiohttp
 from lxml import etree
 
-from backend.save import ARTICLE_QUEUE
+from backend.pipelines.clean import html_clean
+from backend.pipelines.save import ARTICLE_QUEUE
 from backend.spiders.base import BaseSpider
 from utils.log import Logger
-from backend.pipelines.html_clean import html_clean
 
 
 class TuguaSpider(BaseSpider):
@@ -32,12 +32,14 @@ class TuguaSpider(BaseSpider):
         if article_html:
             selector = etree.HTML(article_html)
 
-            tugua_title = \
-                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[1]/td/div/span/span/a[2]/text()')[0]
+            tugua_title = selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[1]/td/div/span/span/a[2]/text()')[0]
             tugua_content = etree.tounicode(
-                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[1]')[0], method='html')
+                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[1]')[0],
+                method='html'
+            )
             publish_time = selector.xpath(
-                '/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/table[1]/tbody/tr/td/div/span/text()')[0]
+                '/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/table[1]/tbody/tr/td/div/span/text()'
+            )[0]
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
 
             return {

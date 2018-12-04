@@ -1,3 +1,6 @@
-import asyncio
-
-MAIN_LOOP = asyncio.get_event_loop()
+def run():
+    """
+    后端爬虫入口
+    :return:
+    """
+    pass

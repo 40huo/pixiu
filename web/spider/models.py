@@ -1,5 +1,4 @@
 from django.db import models
-from django.utils import timezone
 
 
 class Spider(models.Model):
@@ -13,10 +12,11 @@ class Spider(models.Model):
     # 爬虫文件名
     filename = models.CharField(verbose_name='文件名', max_length=256)
     author = models.CharField(verbose_name='作者', max_length=32)
-    create_time = models.DateTimeField(verbose_name='创建时间', default=timezone.now)
-    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
     is_enabled = models.BooleanField(verbose_name='是否启用', default=True)
     is_default = models.BooleanField(verbose_name='是否默认', default=False)
+
+    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
+    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
     def __str__(self):
         return self.name

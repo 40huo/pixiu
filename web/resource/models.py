@@ -46,8 +46,8 @@ class ResourceCategory(models.Model):
     """
     name = models.CharField(verbose_name='分类名称', max_length=64)
     description = models.TextField(verbose_name='描述', default='暂无')
-    create_time = models.DateTimeField(verbose_name='创建时间', default=timezone.now)
-    update_time = models.DateTimeField(verbose_name='更新时间', auto_now=True)
+    created = models.DateTimeField(verbose_name='创建时间', default=timezone.now)
+    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
     is_default = models.BooleanField(verbose_name='是否默认分类', default=False)
 
@@ -93,6 +93,9 @@ class Resource(models.Model):
 
     is_open = models.BooleanField(verbose_name='是否开启', default=True)
     is_deleted = models.BooleanField(verbose_name='是否删除', default=False)
+
+    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
+    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
     def __str__(self):
         return self.name

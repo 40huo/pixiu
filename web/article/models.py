@@ -12,6 +12,8 @@ class ArticleCategory(models.Model):
     文章分类
     """
     name = models.CharField(verbose_name='分类', max_length=64)
+    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
+    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
     class Meta:
         verbose_name = '分类'
@@ -27,6 +29,8 @@ class ArticleTag(models.Model):
     文章标签
     """
     name = models.CharField(verbose_name='标签', max_length=64)
+    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
+    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
     class Meta:
         verbose_name = '标签'
@@ -45,10 +49,11 @@ class Article(models.Model):
     url = models.CharField(verbose_name='原始地址', max_length=256)
     content = models.TextField(verbose_name='文章内容', blank=True)
     pub_time = models.DateTimeField(verbose_name='发布时间', default=timezone.now)
-    update_time = models.DateTimeField(verbose_name='修改时间', auto_now=True)
     category = models.ForeignKey(to=ArticleCategory, verbose_name='分类', on_delete=models.CASCADE)
     tag = models.ManyToManyField(to=ArticleTag, verbose_name='标签', blank=True)
     source = models.ForeignKey(to=Resource, verbose_name='订阅源', on_delete=models.CASCADE)
+    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
+    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
     def __str__(self):
         return self.title
