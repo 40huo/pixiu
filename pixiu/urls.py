@@ -20,13 +20,13 @@ from django.contrib import admin
 from django.urls import path, include
 from rest_framework import routers
 
-from web.article.views import ArticleListViewSet, ArticleCategoryListViewSet
+from web.article.views import ArticleViewSet, ArticleCategoryViewSet
 from web.resource.views import ResourceListViewSet, ResourceCategoryListViewSet
 from web.spider.views import SpiderListViewSet
 
 router = routers.DefaultRouter()
-router.register(r'article', ArticleListViewSet, base_name="article")
-router.register(r'article-category', ArticleCategoryListViewSet, base_name="article-category")
+router.register(r'article', ArticleViewSet, base_name="article")
+router.register(r'article-category', ArticleCategoryViewSet, base_name="article-category")
 router.register(r'resource', ResourceListViewSet, base_name='resource')
 router.register(r'resource-category', ResourceCategoryListViewSet, base_name='resource-category')
 router.register(r'spider', SpiderListViewSet, base_name='spider')
