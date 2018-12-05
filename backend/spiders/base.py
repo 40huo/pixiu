@@ -20,6 +20,7 @@ class BaseSpider(object):
         :param session: aiohttp Session对象
         :param method: 请求方法
         :param post_data: POST 数据
+        :param encoding: 编码
         :return: 请求返回内容
         """
         try:

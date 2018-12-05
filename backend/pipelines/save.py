@@ -1,20 +1,17 @@
-import asyncio
-import time
-
-from backend import CONSUME_LOOP
-
-ARTICLE_QUEUE = asyncio.Queue(maxsize=500, loop=CONSUME_LOOP)
+from lxml.html.clean import Cleaner
 
 
-@asyncio.coroutine
-async def consumer(queue):
+def html_clean(html_content):
     """
-    消费者
-    :param queue:
+    清理HTML中的无用样式、脚本等
     :return:
     """
-    while True:
-        item = await queue.get()
-        print(f'Consuming...{item}')
-        time.sleep(2)
-        queue.task_done()
+    cleaner = Cleaner(
+        style=True,
+        scripts=True,
+        comments=True,
+        javascript=True,
+        page_structure=False,
+        safe_attrs_only=True
+    )
+    return cleaner.clean_html(html=html_content)

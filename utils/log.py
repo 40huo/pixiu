@@ -44,7 +44,7 @@ class Logger(object):
                 },
                 'file': {
                     'level': 'DEBUG',
-                    'class': 'cloghandler.ConcurrentRotatingFileHandler',
+                    'class': 'logging.handlers.RotatingFileHandler',
                     'formatter': 'format_for_file',
                     'filename': log_file,
                     'encoding': 'utf-8',

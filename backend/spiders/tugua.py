@@ -5,8 +5,7 @@ import urllib.parse
 import aiohttp
 from lxml import etree
 
-from backend.pipelines.clean import html_clean
-from backend.pipelines.save import ARTICLE_QUEUE
+from backend.pipelines.save import html_clean
 from backend.spiders.base import BaseSpider
 from utils.log import Logger
 
@@ -71,7 +70,7 @@ class TuguaSpider(BaseSpider):
         存储
         :return:
         """
-        await ARTICLE_QUEUE.put(item=data)
+        return True
 
     @asyncio.coroutine
     async def run(self):
