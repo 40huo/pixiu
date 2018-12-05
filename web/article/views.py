@@ -10,11 +10,11 @@ class ArticleListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
     """
     文章列表
     """
-    queryset = Article.objects.all().order_by('pub_time')
+    queryset = Article.objects.all().order_by('-pub_time')
     serializer_class = ArticleSerializer
 
 
-class ArticleCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ArticleCategoryListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     文章分类
     """
