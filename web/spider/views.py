@@ -6,9 +6,9 @@ from .serializers import SpiderSerializer
 
 
 # Create your views here.
-class SpiderListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class SpiderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
-    爬虫列表
+    爬虫
     """
     queryset = Spider.objects.all().order_by('-updated')
     serializer_class = SpiderSerializer

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from web.spider.serializers import SpiderSerializer
 from .models import Resource, ResourceCategory
 
 
@@ -18,6 +19,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     订阅源序列化
     """
     category = ResourceCategorySerializer()
+    spider_type = SpiderSerializer()
 
     class Meta:
         model = Resource

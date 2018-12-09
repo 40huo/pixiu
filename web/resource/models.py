@@ -86,7 +86,7 @@ class Resource(models.Model):
     spider_type = models.ForeignKey(to=Spider, verbose_name='爬虫类型', on_delete=models.SET_DEFAULT, default=get_default_spider)
     refresh_gap = models.PositiveSmallIntegerField(verbose_name='刷新间隔', default=60)  # 单位 小时
     refresh_status = models.PositiveSmallIntegerField(verbose_name='刷新状态', choices=REFRESH_STATUS_CHOICES)
-    last_refresh_time = models.DateTimeField(verbose_name='上次刷新时间', auto_now=True)
+    last_refresh_time = models.DateTimeField(verbose_name='上次刷新时间')
 
     category = models.ForeignKey(to=ResourceCategory, verbose_name='分类', on_delete=models.SET_DEFAULT, default=get_default_category)
     level = models.PositiveSmallIntegerField(verbose_name='等级', choices=RESOURCE_LEVEL_CHOICES)

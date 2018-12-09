@@ -10,6 +10,10 @@ from backend.spiders.base import BaseSpider
 from utils.log import Logger
 
 
+def get_spider(init_url: str):
+    return TuguaSpider(init_url=init_url).run
+
+
 class TuguaSpider(BaseSpider):
     """
     喷嚏图卦
@@ -20,7 +24,7 @@ class TuguaSpider(BaseSpider):
         self.logger = Logger(__name__).get_logger()
 
     @asyncio.coroutine
-    async def parse_article(self, article_link: str, session):
+    async def parse_article(self, article_link: str, session) -> dict:
         """
         解析文章内容
         :param article_link: 文章链接
@@ -48,7 +52,7 @@ class TuguaSpider(BaseSpider):
             }
 
     @asyncio.coroutine
-    async def parse_link(self, init_url: str, session, max_count: int):
+    async def parse_link(self, init_url: str, session, max_count: int) -> list:
         """
         解析文章地址
         :param init_url: 入口地址

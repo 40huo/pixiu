@@ -6,17 +6,17 @@ from .serializers import ResourceSerializer, ResourceCategorySerializer
 
 
 # Create your views here.
-class ResourceCategoryListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ResourceCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
-    订阅源分类列表
+    订阅源分类
     """
     queryset = ResourceCategory.objects.all()
     serializer_class = ResourceCategorySerializer
 
 
-class ResourceListViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ResourceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
-    订阅源列表
+    订阅源
     """
     queryset = Resource.objects.all().order_by('-updated')
     serializer_class = ResourceSerializer
