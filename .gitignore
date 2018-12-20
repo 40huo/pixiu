@@ -109,3 +109,7 @@ venv.bak/
 
 # log
 logs/
+
+# Settings
+pixiu/settings/dev.py
+pixiu/settings/prod.py

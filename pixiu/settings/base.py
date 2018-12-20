@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
@@ -120,3 +120,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Rest Framework
+
+
+# 消息通知
+MAIL_RECIPIENTS = ['xx@xxx.com']
+MAIL_SENDER = 'xxxxx@xxx.com'
+MAIL_API_KEY = 'xxxxx'
+MAIL_DOMAIN = 'xxxxxx'
+
+SERVERCHAN_KEY = 'xxxxx'

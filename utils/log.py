@@ -57,6 +57,7 @@ class Logger(object):
 
         # 减少无用日志
         logging.getLogger('chardet').setLevel(logging.WARNING)
+        logging.getLogger('urllib3').setLevel(logging.WARNING)
 
         logger = logging.getLogger(logger)
         self.logger = logger

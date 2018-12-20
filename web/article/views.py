@@ -6,7 +6,7 @@ from .serializers import ArticleSerializer, ArticleCategorySerializer
 
 
 # Create your views here.
-class ArticleViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ArticleViewSet(viewsets.ModelViewSet):
     """
     文章列表
     """
