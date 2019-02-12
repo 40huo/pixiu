@@ -1,4 +1,9 @@
+import asyncio
+
 from lxml.html.clean import Cleaner
+
+save_queue = asyncio.Queue(maxsize=1024)
+save_queue.get()
 
 
 def html_clean(html_content):
@@ -15,3 +20,22 @@ def html_clean(html_content):
         safe_attrs_only=True
     )
     return cleaner.clean_html(html=html_content)
+
+
+async def produce(queue, data):
+    """
+    生产数据
+    :param queue:
+    :param data:
+    :return:
+    """
+    await queue.put(data)
+
+
+async def consume(queue):
+    """
+    消费队列数据
+    :return:
+    """
+    while True:
+        data = await queue.get()
