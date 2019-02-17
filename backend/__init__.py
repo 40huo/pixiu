@@ -3,9 +3,11 @@ import datetime
 import importlib
 
 import aiohttp
+import pytz
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
 
+from backend.pipelines import save
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
@@ -30,7 +32,7 @@ async def refresh_task(sched):
                     func=spider_class.get_spider(link),
                     args=None,
                     trigger='date',
-                    next_run_time=next_run_time,
+                    next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
                     id=task_id,
                     name=resource.get("name"),
                     misfire_grace_time=600,
@@ -56,6 +58,8 @@ def run():
         id='refresh-task'
     )
     sched.start()
+
+    asyncio.ensure_future(save.consume(save.save_queue))
 
     try:
         loop.run_forever()

@@ -2,8 +2,11 @@ import asyncio
 
 from lxml.html.clean import Cleaner
 
+from utils.log import Logger
+
 save_queue = asyncio.Queue(maxsize=1024)
 save_queue.get()
+logger = Logger(__name__).get_logger()
 
 
 def html_clean(html_content):
@@ -30,6 +33,7 @@ async def produce(queue, data):
     :return:
     """
     await queue.put(data)
+    logger.debug(f'写入存储队列 {data}')
 
 
 async def consume(queue):
@@ -39,3 +43,4 @@ async def consume(queue):
     """
     while True:
         data = await queue.get()
+        logger.debug(f'读取存储队列 {data}')
