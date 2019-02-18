@@ -1,5 +1,7 @@
 from rest_framework import mixins
 from rest_framework import viewsets
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .models import Article, ArticleCategory
 from .serializers import ArticleSerializer, ArticleCategorySerializer
@@ -12,6 +14,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
     """
     queryset = Article.objects.all().order_by('-pub_time')
     serializer_class = ArticleSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    authentication_classes = (SessionAuthentication, TokenAuthentication,)
 
 
 class ArticleCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -20,3 +24,4 @@ class ArticleCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, v
     """
     queryset = ArticleCategory.objects.all()
     serializer_class = ArticleCategorySerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)

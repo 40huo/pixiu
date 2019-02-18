@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'rest_framework',
+    'rest_framework.authtoken',
 
     'web.article',
     'web.spider',
@@ -120,7 +121,11 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # Rest Framework
-
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
+    )
+}
 
 # 消息通知
 MAIL_RECIPIENTS = ['xx@xxx.com']
