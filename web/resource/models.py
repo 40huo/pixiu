@@ -1,8 +1,5 @@
 from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible
-
-from web.spider.models import Spider
 
 
 def get_default_spider():
@@ -10,6 +7,8 @@ def get_default_spider():
     返回默认的爬虫类型
     :return:
     """
+    from web.spider.models import Spider
+
     default, _ = Spider.objects.get_or_create(
         is_default=True,
         defaults={
@@ -39,7 +38,6 @@ def get_default_category():
     return default.id
 
 
-@python_2_unicode_compatible
 class ResourceCategory(models.Model):
     """
     订阅源分类
@@ -59,11 +57,13 @@ class ResourceCategory(models.Model):
         verbose_name_plural = verbose_name
 
 
-@python_2_unicode_compatible
 class Resource(models.Model):
     """
     订阅源
     """
+    from web.spider.models import Spider
+    from web.article.models import ArticleCategory, ArticleTag
+
     # 刷新状态
     REFRESH_STATUS_CHOICES = (
         (0, '从未刷新过'),
@@ -89,6 +89,8 @@ class Resource(models.Model):
     last_refresh_time = models.DateTimeField(verbose_name='上次刷新时间')
 
     category = models.ForeignKey(to=ResourceCategory, verbose_name='分类', on_delete=models.SET_DEFAULT, default=get_default_category)
+    default_category = models.ForeignKey(ArticleCategory, verbose_name='文章默认分类', on_delete=models.SET_DEFAULT, default=get_default_category)
+    default_tag = models.ForeignKey(ArticleTag, verbose_name='文章默认标签', on_delete=models.SET_NULL, blank=True, null=True)
     level = models.PositiveSmallIntegerField(verbose_name='等级', choices=RESOURCE_LEVEL_CHOICES)
 
     is_open = models.BooleanField(verbose_name='是否开启', default=True)

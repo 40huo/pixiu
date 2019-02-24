@@ -4,6 +4,7 @@ import importlib
 
 import aiohttp
 import pytz
+from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
 
@@ -11,6 +12,18 @@ from backend.pipelines import save
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
+
+
+def spider_listener(event):
+    """
+    apscheduler事件回调
+    :param event:
+    :return:
+    """
+    if event.exception:
+        logger.warning(f'任务出现异常 {event.traceback}')
+    else:
+        pass
 
 
 async def refresh_task(sched):
@@ -22,6 +35,9 @@ async def refresh_task(sched):
             for resource in result:
                 spider_class = importlib.import_module(f'.{resource.get("spider_type").get("filename")}', package='.spiders')
                 link = resource.get('link')
+                resource_id = resource.get('id')
+                default_category_id = resource.get('default_category')
+                default_tag_id = resource.get('default_tag')
                 gap = resource.get('refresh_gap')
                 status = resource.get('refresh_status')
                 last_refresh_time = parse_datetime(resource.get('last_refresh_time'))
@@ -48,6 +64,8 @@ def run():
     """
     loop = asyncio.get_event_loop()
     sched = AsyncIOScheduler()
+
+    sched.add_listener(spider_listener, mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED)
 
     sched.add_job(
         func=refresh_task,

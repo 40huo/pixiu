@@ -23,7 +23,7 @@ from rest_framework.authtoken.views import obtain_auth_token
 
 from web.article.views import ArticleViewSet, ArticleCategoryViewSet
 from web.resource.views import ResourceViewSet, ResourceCategoryViewSet
-from web.spider.views import SpiderViewSet
+from web.spider.views import SpiderViewSet, SpiderEventViewSet
 
 router = routers.DefaultRouter()
 router.register(r'article', ArticleViewSet, base_name="article")
@@ -31,6 +31,7 @@ router.register(r'article-category', ArticleCategoryViewSet, base_name="article-
 router.register(r'resource', ResourceViewSet, base_name='resource')
 router.register(r'resource-category', ResourceCategoryViewSet, base_name='resource-category')
 router.register(r'spider', SpiderViewSet, base_name='spider')
+router.register(r'spider-event', SpiderEventViewSet, base_name='spider-event')
 
 urlpatterns = [
     path('api/', include(router.urls)),

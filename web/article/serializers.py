@@ -1,12 +1,23 @@
 from rest_framework import serializers
 
-from .models import Article, ArticleCategory
+from .models import Article, ArticleCategory, ArticleTag
+
+
+class ArticleTagSerializer(serializers.ModelSerializer):
+    """
+    文章标签序列化
+    """
+
+    class Meta:
+        model = ArticleTag
+        fields = '__all__'
 
 
 class ArticleCategorySerializer(serializers.ModelSerializer):
     """
     文章类别序列化
     """
+
     class Meta:
         model = ArticleCategory
         fields = '__all__'
@@ -16,7 +27,8 @@ class ArticleSerializer(serializers.ModelSerializer):
     """
     文章内容序列化
     """
-    category = ArticleCategorySerializer()
+    category = ArticleCategorySerializer(read_only=True)
+    tag = ArticleTagSerializer(read_only=True)
 
     class Meta:
         model = Article
