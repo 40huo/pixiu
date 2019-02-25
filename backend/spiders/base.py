@@ -4,7 +4,7 @@ from utils.log import Logger
 
 
 class BaseSpider(object):
-    def __init__(self, init_url, headers=None):
+    def __init__(self, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
         self.init_url = init_url
         self.headers = headers if headers else {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36'

@@ -20,8 +20,11 @@ class TuguaSpider(BaseSpider):
     喷嚏图卦
     """
 
-    def __init__(self, init_url, headers=None):
+    def __init__(self, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
         super().__init__(init_url=init_url, headers=headers)
+        self.resource_id = resource_id
+        self.default_category_id = default_category_id
+        self.default_tag_id = default_tag_id
         self.logger = Logger(__name__).get_logger()
 
     @asyncio.coroutine
@@ -49,7 +52,10 @@ class TuguaSpider(BaseSpider):
             return {
                 'title': tugua_title,
                 'content': tugua_content,
-                'publish_time': publish_time
+                'publish_time': publish_time,
+                'resource_id': self.resource_id,
+                'default_category_id': self.default_category_id,
+                'default_tag_id': self.default_tag_id,
             }
 
     @asyncio.coroutine

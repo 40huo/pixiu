@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from lxml.html.clean import Cleaner
 
@@ -44,3 +45,9 @@ async def consume(queue):
     while True:
         data = await queue.get()
         logger.debug(f'读取存储队列 {data}')
+
+        try:
+            json_data = json.loads(data)
+
+        except json.JSONDecodeError:
+            logger.error(f'JSON解析失败 {data}')
