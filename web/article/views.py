@@ -12,10 +12,15 @@ class ArticleViewSet(viewsets.ModelViewSet):
     """
     文章列表
     """
-    queryset = Article.objects.all().order_by('-pub_time')
+    queryset = Article.objects.all().order_by('-updated')
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
     authentication_classes = (SessionAuthentication, TokenAuthentication,)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
 
 
 class ArticleCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):

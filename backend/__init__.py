@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import importlib
 
-import aiohttp
 import pytz
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -27,34 +26,35 @@ def spider_listener(event):
 
 
 async def refresh_task(sched):
-    async with aiohttp.ClientSession() as session:
-        spider_api = "http://localhost:8000/api/resource/"
+    from rest_framework.test import RequestsClient
 
-        async with session.get(url=spider_api) as resp:
-            result = await resp.json()
-            for resource in result:
-                spider_class = importlib.import_module(f'.{resource.get("spider_type").get("filename")}', package='.spiders')
-                link = resource.get('link')
-                resource_id = resource.get('id')
-                default_category_id = resource.get('default_category')
-                default_tag_id = resource.get('default_tag')
-                gap = resource.get('refresh_gap')
-                status = resource.get('refresh_status')
-                last_refresh_time = parse_datetime(resource.get('last_refresh_time'))
-                next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
-                task_id = f'{resource.get("name")}({next_run_time})'
+    client = RequestsClient()
+    req = client.get(url='http://testserver/api/resource/')
 
-                sched.add_job(
-                    func=spider_class.get_spider(link),
-                    args=None,
-                    trigger='date',
-                    next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
-                    id=task_id,
-                    name=resource.get("name"),
-                    misfire_grace_time=600,
-                    coalesce=True,
-                    replace_existing=True
-                )
+    result = req.json()
+    for resource in result:
+        spider_class = importlib.import_module(f'.{resource.get("spider_type").get("filename")}', package='.spiders')
+        link = resource.get('link')
+        resource_id = resource.get('id')
+        default_category_id = resource.get('default_category')
+        default_tag_id = resource.get('default_tag')
+        gap = resource.get('refresh_gap')
+        status = resource.get('refresh_status')
+        last_refresh_time = parse_datetime(resource.get('last_refresh_time'))
+        next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
+        task_id = f'{resource.get("name")}({next_run_time})'
+
+        sched.add_job(
+            func=spider_class.get_spider(link, resource_id=resource_id, default_category_id=default_category_id, default_tag_id=default_tag_id),
+            args=None,
+            trigger='date',
+            next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
+            id=task_id,
+            name=resource.get("name"),
+            misfire_grace_time=600,
+            coalesce=True,
+            replace_existing=True
+        )
 
 
 def run():
@@ -62,6 +62,11 @@ def run():
     后端爬虫入口
     :return:
     """
+    import os
+    import django
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pixiu.settings")
+    django.setup()
+
     loop = asyncio.get_event_loop()
     sched = AsyncIOScheduler()
 
@@ -72,6 +77,7 @@ def run():
         args=(sched,),
         trigger='interval',
         seconds=5,
+        misfire_grace_time=600,
         next_run_time=datetime.datetime.now(),
         id='refresh-task'
     )

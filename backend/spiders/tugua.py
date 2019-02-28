@@ -11,8 +11,8 @@ from backend.spiders.base import BaseSpider
 from utils.log import Logger
 
 
-def get_spider(init_url: str):
-    return TuguaSpider(init_url=init_url).run
+def get_spider(init_url: str, *args, **kwargs):
+    return TuguaSpider(init_url, *args, **kwargs).run
 
 
 class TuguaSpider(BaseSpider):
@@ -51,7 +51,8 @@ class TuguaSpider(BaseSpider):
 
             return {
                 'title': tugua_title,
-                'content': tugua_content,
+                'url': article_link,
+                'content': html_clean(tugua_content),
                 'publish_time': publish_time,
                 'resource_id': self.resource_id,
                 'default_category_id': self.default_category_id,
@@ -90,8 +91,6 @@ class TuguaSpider(BaseSpider):
             tasks = [self.parse_article(link, session) for link in article_links]
             for coro in asyncio.as_completed(tasks):
                 data = await coro
-                data['content'] = html_clean(data['content'])
-                self.logger.debug(data)
                 await self.save(data=data)
 
 
