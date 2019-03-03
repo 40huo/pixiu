@@ -1,4 +1,5 @@
 import asyncio
+import hashlib
 
 from utils.log import Logger
 
@@ -26,20 +27,19 @@ class BaseSpider(object):
         try:
             if method == 'GET':
                 async with session.get(url=url, headers=self.headers) as resp:
-                    assert resp.status == 200
                     return await resp.text(encoding=encoding, errors='ignore')
             elif method == 'POST' and post_data is not None:
                 async with session.post(url=url, headers=self.headers, data=post_data) as resp:
-                    assert resp.status == 200
                     return await resp.text(encoding=encoding, errors='ignore')
             else:
                 self.logger.warning(f'Unsupported HTTP method: {method}')
                 return None
-        except AssertionError:
-            self.logger.error(f'Unsupported status code {resp.status} while fetching {url}')
-            return None
         except UnicodeDecodeError:
             self.logger.error(f'Decode error: {url}')
+            return None
+        except Exception as e:
+            self.logger.error(f'未知错误 {e}', exc_info=1)
+            return None
 
     def save(self, data: dict):
         """
@@ -48,6 +48,15 @@ class BaseSpider(object):
         :return:
         """
         raise NotImplementedError('Spider must customize save method!')
+
+    @staticmethod
+    def gen_hash(content: bytes) -> str:
+        """
+        计算Hash值
+        :param content:
+        :return:
+        """
+        return hashlib.sha1(content).hexdigest()
 
     async def run(self):
         """

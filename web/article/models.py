@@ -63,6 +63,7 @@ class Article(models.Model):
     category = models.ForeignKey(to=ArticleCategory, verbose_name='分类', on_delete=models.CASCADE, default=get_default_category)
     tag = models.ManyToManyField(to=ArticleTag, verbose_name='标签', blank=True)
     source = models.ForeignKey(to=Resource, verbose_name='订阅源', on_delete=models.CASCADE)
+    hash = models.CharField(verbose_name='文章哈希', max_length=512, default='')
     created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
     updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
 
@@ -72,3 +73,4 @@ class Article(models.Model):
     class Meta:
         verbose_name = '文章'
         verbose_name_plural = verbose_name
+        unique_together = ('title', 'hash')

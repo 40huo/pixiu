@@ -41,22 +41,24 @@ class TuguaSpider(BaseSpider):
 
             tugua_title = selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[1]/td/div/span/span/a[2]/text()')[0]
             tugua_content = etree.tounicode(
-                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[1]')[0],
+                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[2]')[0],
                 method='html'
             )
             publish_time = selector.xpath(
                 '/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/table[1]/tbody/tr/td/div/span/text()'
             )[0]
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
+            clean_content = html_clean(tugua_content)
 
             return {
                 'title': tugua_title,
                 'url': article_link,
-                'content': html_clean(tugua_content),
+                'content': clean_content,
                 'publish_time': publish_time,
                 'resource_id': self.resource_id,
                 'default_category_id': self.default_category_id,
                 'default_tag_id': self.default_tag_id,
+                'hash': self.gen_hash(clean_content.encode(errors='ignore'))
             }
 
     @asyncio.coroutine

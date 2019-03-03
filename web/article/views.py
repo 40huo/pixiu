@@ -22,7 +22,6 @@ class ArticleViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
 
 
-
 class ArticleCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """
     文章分类
