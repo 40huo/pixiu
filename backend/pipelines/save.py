@@ -4,6 +4,7 @@ import json
 
 from lxml.html.clean import Cleaner
 
+from pixiu.settings import TOKEN
 from utils.log import Logger
 
 save_queue = asyncio.Queue(maxsize=1024)
@@ -62,8 +63,11 @@ async def consume(queue):
                 'hash': data.get('hash')
             }
 
-            resp = client.post(url='http://testserver/api/article/', json=post_data, headers={'Authorization': 'Token a75598cbe08be4a7823045101b55b39c762cac6a'})
-            logger.debug(resp.text)
+            resp = client.post(url='http://testserver/api/article/', json=post_data, headers={'Authorization': f'Token {TOKEN}'})
+            if resp.status_code == 201:
+                logger.info('存储成功')
+            else:
+                logger.warning(f'存储失败，状态码 {resp.status_code} 响应详情 {resp.text}')
 
         except json.JSONDecodeError:
             logger.error(f'JSON解析失败 {data}')

@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
 
 from .models import Article, ArticleCategory, ArticleTag
 
@@ -33,3 +34,9 @@ class ArticleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Article
         fields = '__all__'
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Article.objects.all(),
+                fields=('title', 'hash')
+            )
+        ]
