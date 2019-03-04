@@ -58,7 +58,8 @@ async def consume(queue):
                 'pub_time': datetime.datetime.strftime(data.get('publish_time'), '%Y-%m-%dT%H:%M:%S'),
                 'source': data.get('resource_id'),
                 'category': data.get('default_category_id'),
-                'tag': data.get('default_tag_id')
+                'tag': data.get('default_tag_id'),
+                'hash': data.get('hash')
             }
 
             resp = client.post(url='http://testserver/api/article/', json=post_data, headers={'Authorization': 'Token a75598cbe08be4a7823045101b55b39c762cac6a'})
