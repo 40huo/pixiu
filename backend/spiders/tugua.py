@@ -21,10 +21,7 @@ class TuguaSpider(BaseSpider):
     """
 
     def __init__(self, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
-        super().__init__(init_url=init_url, headers=headers)
-        self.resource_id = resource_id
-        self.default_category_id = default_category_id
-        self.default_tag_id = default_tag_id
+        super().__init__(init_url, headers, resource_id, default_category_id, default_tag_id)
         self.logger = Logger(__name__).get_logger()
 
     @asyncio.coroutine
@@ -94,6 +91,9 @@ class TuguaSpider(BaseSpider):
             for coro in asyncio.as_completed(tasks):
                 data = await coro
                 await self.save(data=data)
+
+            # 爬取结束，更新resource中的last_refresh_time
+            self.update_resource()
 
 
 if __name__ == '__main__':

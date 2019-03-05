@@ -1,5 +1,7 @@
 from rest_framework import mixins
 from rest_framework import viewsets
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .models import Resource, ResourceCategory
 from .serializers import ResourceSerializer, ResourceCategorySerializer
@@ -14,9 +16,11 @@ class ResourceCategoryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, 
     serializer_class = ResourceCategorySerializer
 
 
-class ResourceViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+class ResourceViewSet(viewsets.ModelViewSet):
     """
     订阅源
     """
-    queryset = Resource.objects.all().order_by('-updated')
+    queryset = Resource.objects.select_related('category').all().order_by('-updated')
     serializer_class = ResourceSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    authentication_classes = (SessionAuthentication, TokenAuthentication,)
