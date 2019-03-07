@@ -113,3 +113,6 @@ logs/
 # Settings
 pixiu/settings/dev.py
 pixiu/settings/prod.py
+
+# Output
+media/output/
