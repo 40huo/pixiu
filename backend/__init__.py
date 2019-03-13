@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import importlib
+import logging
 import re
 import traceback
 
@@ -15,6 +16,8 @@ from utils import notify
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
+logging.getLogger("apscheduler.scheduler").setLevel(logging.WARNING)
+logging.getLogger("apscheduler.executors").setLevel(logging.INFO)
 spider_id_re = re.compile(r'\((\d+)\)$')
 
 
