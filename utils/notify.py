@@ -20,7 +20,7 @@ def send_wechat(title, content=''):
             logger.error(f'Send wechat error: {sc_req.json()}')
             return False
     except Exception as e:
-        logger.error(f'ServerChan push failed: {e}', exc_info=1)
+        logger.error(f'ServerChan push failed: {e}', exc_info=True)
         return False
 
 
@@ -44,7 +44,7 @@ def send_mail(content, sub='DNSLog发来贺电', recipients=MAIL_RECIPIENTS):
             logger.error(f'Send mail error: {mail_req.json()}')
             return False
     except Exception as e:
-        logger.error(f'Mailgun push failed: {e}', exc_info=1)
+        logger.error(f'Mailgun push failed: {e}', exc_info=True)
         return False
 
 

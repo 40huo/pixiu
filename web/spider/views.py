@@ -1,5 +1,7 @@
 from rest_framework import mixins
 from rest_framework import viewsets
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .models import Spider, SpiderEvent
 from .serializers import SpiderSerializer, SpiderEventSerializer
@@ -14,9 +16,11 @@ class SpiderViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.G
     serializer_class = SpiderSerializer
 
 
-class SpiderEventViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, mixins.CreateModelMixin, mixins.DestroyModelMixin, viewsets.GenericViewSet):
+class SpiderEventViewSet(viewsets.ModelViewSet):
     """
     爬虫事件
     """
     queryset = SpiderEvent.objects.all().order_by('-updated')
     serializer_class = SpiderEventSerializer
+    permission_classes = (IsAuthenticatedOrReadOnly,)
+    authentication_classes = (SessionAuthentication, TokenAuthentication,)

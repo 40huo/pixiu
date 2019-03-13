@@ -46,7 +46,7 @@ class BaseSpider(object):
             self.logger.error(f'Decode error: {url}')
             return None
         except Exception as e:
-            self.logger.error(f'未知错误 {e}', exc_info=1)
+            self.logger.error(f'未知错误 {e}', exc_info=True)
             return None
 
     def save(self, data: dict):

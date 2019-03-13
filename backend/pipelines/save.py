@@ -63,11 +63,11 @@ async def consume(queue):
                 'hash': data.get('hash')
             }
 
-            resp = client.post(url='http://testserver/api/article/', json=post_data, headers={'Authorization': f'Token {TOKEN}'})
-            if resp.status_code == 201:
+            req = client.post(url='http://testserver/api/article/', json=post_data, headers={'Authorization': f'Token {TOKEN}'})
+            if req.status_code == 201:
                 logger.info('存储成功')
             else:
-                logger.warning(f'存储失败，状态码 {resp.status_code} 响应详情 {resp.text}')
+                logger.warning(f'存储失败，状态码 {req.status_code} 响应详情 {req.text}')
 
         except json.JSONDecodeError:
             logger.error(f'JSON解析失败 {data}')
