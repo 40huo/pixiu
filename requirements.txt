@@ -7,3 +7,4 @@ aiohttp
 coloredlogs
 lxml
 beautifulsoup4
+django-environ

@@ -111,8 +111,7 @@ venv.bak/
 logs/
 
 # Settings
-pixiu/settings/dev.py
-pixiu/settings/prod.py
+.envs/*.env
 
 # Output
 media/output/

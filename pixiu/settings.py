@@ -10,21 +10,34 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
 
-import os
+import platform
+
+import environ
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = environ.Path(__file__) - 2
+
+env = environ.Env()
+
+core_env = env.str('PIXIU_ENV', '')
+if not core_env:
+    if 'darwin' in platform.platform().lower() or 'windows' in platform.platform().lower():
+        core_env = 'dev'
+    else:
+        core_env = 'prod'
+
+env.read_env(f"{BASE_DIR.path('.envs')}/{core_env}.env")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '$u=f^-%qp6ugisywq+hq(=dh%r20qc(!5_ls6xm*&dn2lr+v4h'
+SECRET_KEY = env.str('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool('DEBUG', False)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', [])
 
 # Application definition
 
@@ -60,7 +73,7 @@ ROOT_URLCONF = 'pixiu.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [BASE_DIR.path('templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,10 +92,7 @@ WSGI_APPLICATION = 'pixiu.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
+    'default': env.db()
 }
 
 # Password validation
@@ -120,11 +130,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = BASE_DIR.path('static')
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR.path('media')
 
 # Rest Framework
 REST_FRAMEWORK = {
@@ -132,3 +142,14 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     )
 }
+
+# 消息通知
+MAIL_RECIPIENTS = env.list('MAIL_RECIPIENTS')
+MAIL_SENDER = env.str('MAIL_SENDER')
+MAIL_API_KEY = env.str('MAIL_API_KEY')
+MAIL_DOMAIN = env.str('MAIL_DOMAIN')
+
+SERVERCHAN_KEY = env.str('SERVERCHAN_KEY')
+
+# API Token
+TOKEN = env.str('TOKEN')
