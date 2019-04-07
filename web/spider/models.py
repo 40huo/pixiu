@@ -1,4 +1,5 @@
 from django.db import models
+from django_extensions.db.models import CreationDateTimeField, ModificationDateTimeField
 
 
 class Spider(models.Model):
@@ -12,8 +13,8 @@ class Spider(models.Model):
     is_enabled = models.BooleanField(verbose_name='是否启用', default=True)
     is_default = models.BooleanField(verbose_name='是否默认', default=False)
 
-    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
-    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
+    created = CreationDateTimeField(verbose_name='创建时间')
+    updated = ModificationDateTimeField(verbose_name='更新时间')
 
     def __str__(self):
         return self.name
@@ -38,8 +39,8 @@ class SpiderEvent(models.Model):
     spider = models.ForeignKey(Spider, on_delete=models.CASCADE, verbose_name='爬虫')
     message = models.TextField(verbose_name='事件信息', default='')
     level = models.IntegerField(verbose_name='事件等级', choices=MESSAGE_LEVEL_CHOICE)
-    created = models.DateTimeField(verbose_name='创建时间', auto_now_add=True)
-    updated = models.DateTimeField(verbose_name='更新时间', auto_now=True)
+    created = CreationDateTimeField(verbose_name='创建时间')
+    updated = ModificationDateTimeField(verbose_name='更新时间')
 
     class Meta:
         verbose_name = '爬虫事件'

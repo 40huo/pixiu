@@ -8,3 +8,4 @@ coloredlogs
 lxml
 beautifulsoup4
 django-environ
+django-extensions

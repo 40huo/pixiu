@@ -16,15 +16,12 @@ Including another URLconf
     1. Import the include() function: from django.conf.urls import url, include
     2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
 """
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.urls import path, include
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 
-from pixiu.settings import MEDIA_ROOT, MEDIA_URL
-from web.article.views import ArticleViewSet, ArticleCategoryViewSet
+from web.article.views import ArticleViewSet, ArticleCategoryViewSet, ArticleFeed
 from web.resource.views import ResourceViewSet, ResourceCategoryViewSet
 from web.spider.views import SpiderViewSet, SpiderEventViewSet
 
@@ -41,8 +38,6 @@ urlpatterns = [
 
     path('admin/', admin.site.urls),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('api-token-auth/', obtain_auth_token, name='api_token_auth')
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
+    path('rss/<str:source_name>/', ArticleFeed())
 ]
-
-urlpatterns += staticfiles_urlpatterns()
-urlpatterns += static(MEDIA_URL, document_root=MEDIA_ROOT)

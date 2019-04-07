@@ -82,7 +82,7 @@ def spider_listener(event):
         notify.send_mail(content=traceback.format_exc(), sub='Pixiu任务异常')
 
 
-async def refresh_task(sched):
+async def refresh_task(scheduler):
     from rest_framework.test import RequestsClient
 
     client = RequestsClient()
@@ -90,7 +90,7 @@ async def refresh_task(sched):
 
     result = req.json()
     for resource in result:
-        spider_class = importlib.import_module(f'.{resource.get("spider_type").get("filename")}', package='.spiders')
+        spider_class = importlib.import_module(f'.{resource.get("spider_type").get("filename")}', package='backend.spiders')
         link = resource.get('link')
         resource_id = resource.get('id')
         default_category_id = resource.get('default_category')
@@ -101,17 +101,24 @@ async def refresh_task(sched):
         next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
         task_id = f'{resource.get("name")}-({resource.get("spider_type").get("id")})'
 
-        sched.add_job(
-            func=spider_class.get_spider(link, resource_id=resource_id, default_category_id=default_category_id, default_tag_id=default_tag_id),
-            args=None,
-            trigger='date',
-            next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
-            id=task_id,
-            name=resource.get("name"),
-            misfire_grace_time=600,
-            coalesce=True,
-            replace_existing=True
-        )
+        for job in scheduler.get_jobs():
+            if job.id == task_id:
+                job.modify(
+                    next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC))
+                )
+                return None
+        else:
+            scheduler.add_job(
+                func=spider_class.get_spider(link, resource_id=resource_id, default_category_id=default_category_id, default_tag_id=default_tag_id),
+                args=None,
+                trigger='date',
+                next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
+                id=task_id,
+                name=resource.get("name"),
+                misfire_grace_time=600,
+                coalesce=True,
+                replace_existing=True
+            )
 
 
 def run():
@@ -119,34 +126,30 @@ def run():
     后端爬虫入口
     :return:
     """
-    import os
-    import django
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "pixiu.settings")
-    django.setup()
-
     loop = asyncio.get_event_loop()
-    sched = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler()
 
-    sched.add_listener(spider_listener, mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED)
+    scheduler.add_listener(spider_listener, mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED)
 
-    sched.add_job(
+    scheduler.add_job(
         func=refresh_task,
-        args=(sched,),
+        args=(scheduler,),
         trigger='interval',
         seconds=5,
         misfire_grace_time=600,
         next_run_time=datetime.datetime.now(),
         id='refresh-task'
     )
-    sched.start()
+    scheduler.start()
 
     asyncio.ensure_future(save.consume(save.save_queue))
 
     try:
         loop.run_forever()
     except KeyboardInterrupt:
+        logger.info(f'退出......')
+        scheduler.shutdown(wait=False)
         loop.close()
-        sched.shutdown(wait=False)
 
 
 if __name__ == '__main__':

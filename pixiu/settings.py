@@ -55,7 +55,6 @@ INSTALLED_APPS = [
     'web.article',
     'web.spider',
     'web.resource',
-    'web.output'
 ]
 
 MIDDLEWARE = [
@@ -134,10 +133,6 @@ STATIC_ROOT = env.path('STATIC_ROOT')
 STATICFILES_DIRS = [
     str(BASE_DIR.path('static'))
 ]
-
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR.path('media')
 
 # Rest Framework
 REST_FRAMEWORK = {
