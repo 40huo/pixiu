@@ -23,8 +23,8 @@ class Resource(models.Model):
     """
     订阅源
     """
-    from web.spider.models import Spider
-    from web.article.models import ArticleCategory, ArticleTag
+    from apps.spider.models import Spider
+    from apps.article.models import ArticleCategory, ArticleTag
 
     # 刷新状态
     REFRESH_STATUS_CHOICES = (

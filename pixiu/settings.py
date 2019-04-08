@@ -52,9 +52,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
 
-    'web.article',
-    'web.spider',
-    'web.resource',
+    'apps.article',
+    'apps.spider',
+    'apps.resource',
 ]
 
 MIDDLEWARE = [

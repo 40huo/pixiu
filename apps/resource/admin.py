@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from web.resource.models import ResourceCategory, Resource
+from apps.resource.models import ResourceCategory, Resource
 
 
 # Register your models here.

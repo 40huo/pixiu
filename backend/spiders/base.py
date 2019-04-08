@@ -2,14 +2,16 @@ import asyncio
 import datetime
 import hashlib
 
-from rest_framework.test import RequestsClient
-
-from pixiu.settings import TOKEN
+from backend import executor
+from utils.http_req import send_req
 from utils.log import Logger
 
 
 class BaseSpider(object):
-    def __init__(self, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
+    logger = Logger(__name__).get_logger()
+
+    def __init__(self, loop, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
+        self.loop = loop
         self.init_url = init_url
         self.resource_id = resource_id
         self.default_category_id = default_category_id
@@ -18,8 +20,6 @@ class BaseSpider(object):
         self.headers = headers if headers else {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36'
         }
-
-        self.logger = Logger(__name__).get_logger()
 
     @asyncio.coroutine
     async def get_html(self, url: str, session, method: str = 'GET', post_data: str = None, encoding: str = None):
@@ -66,17 +66,21 @@ class BaseSpider(object):
         """
         return hashlib.sha1(content).hexdigest()
 
-    def update_resource(self):
-        client = RequestsClient()
-        resp = client.patch(
-            url=f'http://testserver/api/resource/{self.resource_id}/',
-            json={'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S')},
-            headers={'Authorization': f'Token {TOKEN}'}
+    async def update_resource(self):
+        req = await self.loop.run_in_executor(
+            executor,
+            send_req,
+            'patch',
+            f'/api/resource/{self.resource_id}/',
+            {
+                'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
+                'refresh_status': 3
+            },
         )
-        if resp.status_code == 200:
-            self.logger.info(f'更新 {self.resource_id} 订阅源last_refresh_time成功')
+        if req.status_code == 200:
+            self.logger.info(f'更新 {self.resource_id} 订阅源last_refresh_time, status成功')
         else:
-            self.logger.error(f'更新 {self.resource_id} 订阅源last_refresh_time失败，状态码 {resp.status_code}，响应 {resp.text}')
+            self.logger.error(f'更新 {self.resource_id} 订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
 
     async def run(self):
         """

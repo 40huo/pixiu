@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from web.article.models import ArticleTag, ArticleCategory, Article
+from apps.article.models import ArticleTag, ArticleCategory, Article
 
 
 # Register your models here.

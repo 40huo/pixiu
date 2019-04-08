@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from web.spider.models import Spider
+from apps.spider.models import Spider
 
 
 # Register your models here.

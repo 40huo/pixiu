@@ -21,9 +21,9 @@ from django.urls import path, include
 from rest_framework import routers
 from rest_framework.authtoken.views import obtain_auth_token
 
-from web.article.views import ArticleViewSet, ArticleCategoryViewSet, ArticleFeed
-from web.resource.views import ResourceViewSet, ResourceCategoryViewSet
-from web.spider.views import SpiderViewSet, SpiderEventViewSet
+from apps.article.views import ArticleViewSet, ArticleCategoryViewSet, ArticleFeed
+from apps.resource.views import ResourceViewSet, ResourceCategoryViewSet
+from apps.spider.views import SpiderViewSet, SpiderEventViewSet
 
 router = routers.DefaultRouter()
 router.register(r'article', ArticleViewSet, base_name="article")

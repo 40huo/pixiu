@@ -1,4 +1,5 @@
 import asyncio
+import concurrent.futures
 import datetime
 import importlib
 import logging
@@ -11,14 +12,15 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
 
 from backend.pipelines import save
-from pixiu.settings import TOKEN
 from utils import notify
+from utils.http_req import send_req
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
 logging.getLogger("apscheduler.scheduler").setLevel(logging.WARNING)
 logging.getLogger("apscheduler.executors").setLevel(logging.INFO)
 spider_id_re = re.compile(r'\((\d+)\)$')
+executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 
 
 def spider_listener(event):
@@ -27,9 +29,6 @@ def spider_listener(event):
     :param event:
     :return:
     """
-    from rest_framework.test import RequestsClient
-
-    client = RequestsClient()
     try:
         match = spider_id_re.search(event.job_id)
         if match:
@@ -67,7 +66,7 @@ def spider_listener(event):
                     'spider': spider_id
                 }
 
-            req = client.post(url='http://testserver/api/spider-event/', json=post_data, headers={'Authorization': f'Token {TOKEN}'})
+            req = send_req(method='post', url='/api/spider-event/', data=post_data)
             if req.status_code == 201:
                 logger.info('任务异常事件上报成功')
             else:
@@ -82,11 +81,23 @@ def spider_listener(event):
         notify.send_mail(content=traceback.format_exc(), sub='Pixiu任务异常')
 
 
-async def refresh_task(scheduler):
-    from rest_framework.test import RequestsClient
-
-    client = RequestsClient()
-    req = client.get(url='http://testserver/api/resource/')
+async def refresh_task(loop, scheduler):
+    """
+    任务获取
+    :param loop: 协程loop
+    :param scheduler: apscheduler
+    :return:
+    """
+    req = await loop.run_in_executor(
+        executor,
+        send_req,
+        'get',
+        '/api/resource/'
+    )
+    if req.status_code != 200:
+        msg = f'resource API请求失败 {req.json()}'
+        logger.error(msg)
+        raise Exception(msg)
 
     result = req.json()
     for resource in result:
@@ -98,7 +109,14 @@ async def refresh_task(scheduler):
         gap = resource.get('refresh_gap')
         status = resource.get('refresh_status')
         last_refresh_time = parse_datetime(resource.get('last_refresh_time'))
-        next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
+
+        # (0, '从未刷新过')
+        # (1, '刷新失败')
+        if status in (0, 1):
+            next_run_time = datetime.datetime.now(tz=pytz.UTC)
+        else:
+            next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
+
         task_id = f'{resource.get("name")}-({resource.get("spider_type").get("id")})'
 
         for job in scheduler.get_jobs():
@@ -107,18 +125,18 @@ async def refresh_task(scheduler):
                     next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC))
                 )
                 return None
-        else:
-            scheduler.add_job(
-                func=spider_class.get_spider(link, resource_id=resource_id, default_category_id=default_category_id, default_tag_id=default_tag_id),
-                args=None,
-                trigger='date',
-                next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
-                id=task_id,
-                name=resource.get("name"),
-                misfire_grace_time=600,
-                coalesce=True,
-                replace_existing=True
-            )
+
+        scheduler.add_job(
+            func=spider_class.get_spider(loop, link, resource_id=resource_id, default_category_id=default_category_id, default_tag_id=default_tag_id),
+            args=None,
+            trigger='date',
+            next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
+            id=task_id,
+            name=resource.get("name"),
+            misfire_grace_time=600,
+            coalesce=True,
+            replace_existing=True
+        )
 
 
 def run():
@@ -133,7 +151,7 @@ def run():
 
     scheduler.add_job(
         func=refresh_task,
-        args=(scheduler,),
+        args=(loop, scheduler),
         trigger='interval',
         seconds=5,
         misfire_grace_time=600,
@@ -142,7 +160,7 @@ def run():
     )
     scheduler.start()
 
-    asyncio.ensure_future(save.consume(save.save_queue))
+    asyncio.ensure_future(save.consume(loop, save.save_queue))
 
     try:
         loop.run_forever()
@@ -150,7 +168,3 @@ def run():
         logger.info(f'退出......')
         scheduler.shutdown(wait=False)
         loop.close()
-
-
-if __name__ == '__main__':
-    run()

@@ -20,8 +20,8 @@ class TuguaSpider(BaseSpider):
     喷嚏图卦
     """
 
-    def __init__(self, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
-        super().__init__(init_url, headers, resource_id, default_category_id, default_tag_id)
+    def __init__(self, loop, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
+        super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id)
         self.logger = Logger(__name__).get_logger()
 
     @asyncio.coroutine
@@ -93,11 +93,4 @@ class TuguaSpider(BaseSpider):
                 await self.save(data=data)
 
             # 爬取结束，更新resource中的last_refresh_time
-            self.update_resource()
-
-
-if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    spider = TuguaSpider(init_url='http://www.dapenti.com/blog/blog.asp?subjectid=70&name=xilei')
-    loop.run_until_complete(spider.run())
-    loop.close()
+            await self.update_resource()

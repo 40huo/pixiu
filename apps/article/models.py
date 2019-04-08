@@ -40,7 +40,7 @@ class Article(models.Model):
     """
     文章内容
     """
-    from web.resource.models import Resource
+    from apps.resource.models import Resource
 
     title = models.CharField(verbose_name='标题', max_length=256)
     url = models.URLField(verbose_name='原始地址', max_length=256)
