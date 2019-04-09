@@ -2,6 +2,8 @@ import logging
 import logging.config
 import os
 
+from pixiu.settings import LOG_TYPE
+
 
 class Logger(object):
     def __init__(self, logger, filename='logs/pixiu.log'):
@@ -23,7 +25,7 @@ class Logger(object):
             'loggers': {
                 '': {
                     'level': 'DEBUG',
-                    'handlers': ['console', 'file'],
+                    'handlers': LOG_TYPE,
                 },
             },
             'formatters': {
