@@ -24,7 +24,6 @@ class TuguaSpider(BaseSpider):
         super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id)
         self.logger = Logger(__name__).get_logger()
 
-    @asyncio.coroutine
     async def parse_article(self, article_link: str, session) -> dict:
         """
         解析文章内容
@@ -58,7 +57,6 @@ class TuguaSpider(BaseSpider):
                 'hash': self.gen_hash(clean_content.encode(errors='ignore'))
             }
 
-    @asyncio.coroutine
     async def parse_link(self, init_url: str, session, max_count: int) -> list:
         """
         解析文章地址
@@ -75,7 +73,6 @@ class TuguaSpider(BaseSpider):
             detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
             return detail_links
 
-    @asyncio.coroutine
     async def save(self, data: dict):
         """
         存储
@@ -83,7 +80,6 @@ class TuguaSpider(BaseSpider):
         """
         await save.produce(save.save_queue, data=data)
 
-    @asyncio.coroutine
     async def run(self):
         async with aiohttp.ClientSession() as session:
             article_links = await self.parse_link(self.init_url, session, max_count=10)

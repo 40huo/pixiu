@@ -70,7 +70,7 @@ def spider_listener(event):
             if req.status_code == 201:
                 logger.info('任务异常事件上报成功')
             else:
-                logger.warning(f'任务异常时间上报失败，状态码 {req.status_code}，响应详情 {req.text}')
+                logger.warning(f'任务异常事件上报失败，状态码 {req.status_code}，响应详情 {req.text}')
         else:
             logger.error(f'任务id中不存在爬虫id {event.traceback}')
             notify.send_wechat(title='Pixiu任务异常-任务id中不存在爬虫id', content=event.traceback)
