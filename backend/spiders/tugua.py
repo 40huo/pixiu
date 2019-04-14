@@ -10,6 +10,8 @@ from backend.pipelines.save import html_clean
 from backend.spiders.base import BaseSpider
 from utils.log import Logger
 
+logger = Logger(__name__).get_logger()
+
 
 def get_spider(init_url: str, *args, **kwargs):
     return TuguaSpider(init_url, *args, **kwargs).run
@@ -22,7 +24,6 @@ class TuguaSpider(BaseSpider):
 
     def __init__(self, loop, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
         super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id)
-        self.logger = Logger(__name__).get_logger()
 
     async def parse_article(self, article_link: str, session) -> dict:
         """

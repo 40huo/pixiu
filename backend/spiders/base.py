@@ -2,13 +2,14 @@ import asyncio
 import datetime
 import hashlib
 
-from backend import executor
+from backend.scheduler import executor
 from utils.http_req import send_req
 from utils.log import Logger
 
+logger = Logger(__name__).get_logger()
+
 
 class BaseSpider(object):
-    logger = Logger(__name__).get_logger()
 
     def __init__(self, loop, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
         self.loop = loop
@@ -40,13 +41,13 @@ class BaseSpider(object):
                 async with session.post(url=url, headers=self.headers, data=post_data) as resp:
                     return await resp.text(encoding=encoding, errors='ignore')
             else:
-                self.logger.warning(f'Unsupported HTTP method: {method}')
+                logger.warning(f'Unsupported HTTP method: {method}')
                 return None
         except UnicodeDecodeError:
-            self.logger.error(f'Decode error: {url}')
+            logger.error(f'Decode error: {url}')
             return None
         except Exception as e:
-            self.logger.error(f'未知错误 {e}', exc_info=True)
+            logger.error(f'未知错误 {e}', exc_info=True)
             return None
 
     def save(self, data: dict):
@@ -78,9 +79,9 @@ class BaseSpider(object):
             },
         )
         if req.status_code == 200:
-            self.logger.info(f'更新 {self.resource_id} 订阅源last_refresh_time, status成功')
+            logger.info(f'更新 {self.resource_id} 订阅源last_refresh_time, status成功')
         else:
-            self.logger.error(f'更新 {self.resource_id} 订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
+            logger.error(f'更新 {self.resource_id} 订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
 
     async def run(self):
         """

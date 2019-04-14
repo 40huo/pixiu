@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand, CommandError
 
-import backend
+import backend.scheduler
 
 
 class Command(BaseCommand):
@@ -8,6 +8,6 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         try:
-            backend.run()
+            backend.scheduler.run()
         except Exception as e:
             raise CommandError(f'启动爬虫后端出错 {e}')
