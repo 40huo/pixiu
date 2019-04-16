@@ -22,8 +22,8 @@ class TuguaSpider(BaseSpider):
     喷嚏图卦
     """
 
-    def __init__(self, loop, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
-        super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id)
+    def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
+        super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
 
     async def parse_article(self, article_link: str, session) -> dict:
         """

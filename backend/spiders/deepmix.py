@@ -19,27 +19,23 @@ class DeepMix(BaseSpider):
     session = requests.session()
     deepmix_index_url = ''
 
-    def __init__(
-            self,
-            loop,
-            init_url: str,
-            headers: str = None,
-            resource_id: int = None,
-            default_category_id: int = None,
-            default_tag_id: int = None,
-            proxy: dict = None,
-            username: str = '',
-            password: str = ''
-    ):
-        super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id)
+    def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
+        super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id, *args, **kwargs)
+
+        proxy = kwargs.pop('proxy', None)
         if proxy is None:
             self.proxy = {
                 'http': 'socks5h://127.0.0.1:9150',
                 'https': 'socks5h://127.0.0.1:9150'
             }
         else:
-            self.proxy = proxy
+            self.proxy = {
+                'http': proxy,
+                'https': proxy
+            }
 
+        username = kwargs.pop('username', '')
+        password = kwargs.pop('password', '')
         self.username = username
         self.password = password
         self.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:60.0) Gecko/20100101 Firefox/60.0'

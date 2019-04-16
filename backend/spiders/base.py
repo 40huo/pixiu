@@ -11,7 +11,7 @@ logger = Logger(__name__).get_logger()
 
 class BaseSpider(object):
 
-    def __init__(self, loop, init_url: str, headers: str = None, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None):
+    def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
         self.loop = loop
         self.init_url = init_url
         self.resource_id = resource_id

@@ -1,7 +1,17 @@
 from rest_framework import serializers
 
-from .models import Resource, ResourceCategory
+from .models import Authorization, Resource, ResourceCategory
 from ..spider.serializers import SpiderSerializer
+
+
+class AuthorizationSerializer(serializers.ModelSerializer):
+    """
+    认证序列化
+    """
+
+    class Meta:
+        model = Authorization
+        fields = '__all__'
 
 
 class ResourceCategorySerializer(serializers.ModelSerializer):
@@ -20,6 +30,7 @@ class ResourceSerializer(serializers.ModelSerializer):
     """
     category = ResourceCategorySerializer(read_only=True)
     spider_type = SpiderSerializer(read_only=True)
+    auth = AuthorizationSerializer(read_only=True)
 
     class Meta:
         model = Resource
