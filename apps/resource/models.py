@@ -13,11 +13,13 @@ class Authorization(models.Model):
     )
     name = models.CharField(verbose_name='认证名称', max_length=64)
     type = models.PositiveSmallIntegerField(verbose_name='认证类型', choices=AUTH_TYPE_CHOICES, default=0)
-    username = models.CharField(verbose_name='账号', max_length=128, default='')
-    password = models.CharField(verbose_name='密码', max_length=128, default='')
-    cookie = models.CharField(verbose_name='Cookie', max_length=512, default='')
-    auth_header = models.CharField(verbose_name='认证请求头', max_length=128, default='')
-    auth_value = models.CharField(verbose_name='认证Token', max_length=128, default='')
+    username = models.CharField(verbose_name='账号', max_length=128, default='', blank=True)
+    password = models.CharField(verbose_name='密码', max_length=128, default='', blank=True)
+    cookie = models.CharField(verbose_name='Cookie', max_length=512, default='', blank=True)
+    auth_header = models.CharField(verbose_name='认证请求头', max_length=128, default='', blank=True)
+    auth_value = models.CharField(verbose_name='认证Token', max_length=128, default='', blank=True)
+    created = CreationDateTimeField(verbose_name='创建时间')
+    updated = ModificationDateTimeField(verbose_name='更新时间')
 
     def __str__(self):
         return self.name
