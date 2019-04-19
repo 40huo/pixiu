@@ -17,8 +17,7 @@ from utils.http_req import send_req
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
-logging.getLogger("apscheduler.scheduler").setLevel(logging.WARNING)
-logging.getLogger("apscheduler.executors").setLevel(logging.INFO)
+logging.getLogger("apscheduler").setLevel(logging.WARNING)
 spider_id_re = re.compile(r'\((\d+)\)$')
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 
@@ -72,9 +71,9 @@ def spider_listener(event):
             else:
                 logger.warning(f'任务异常事件上报失败，状态码 {req.status_code}，响应详情 {req.text}')
         else:
-            logger.error(f'任务id中不存在爬虫id {event.traceback}')
-            notify.send_wechat(title='Pixiu任务异常-任务id中不存在爬虫id', content=event.traceback)
-            notify.send_mail(content=event.traceback, sub='Pixiu任务异常')
+            logger.error(f'任务id中不存在爬虫id {event}')
+            notify.send_wechat(title='Pixiu任务异常-任务id中不存在爬虫id', content=event)
+            notify.send_mail(content=event, sub='Pixiu任务异常')
     except Exception as e:
         logger.error(f'处理任务异常时出错 {e}', exc_info=True)
         notify.send_wechat(title='Pixiu任务异常-处理任务异常时出错', content=traceback.format_exc())
@@ -94,7 +93,9 @@ async def refresh_task(loop, scheduler):
         'get',
         '/api/resource/'
     )
-    if req.status_code != 200:
+    if req.status_code == 200:
+        logger.debug('请求/api/resource/成功')
+    else:
         msg = f'resource API请求失败 {req.json()}'
         logger.error(msg)
         raise Exception(msg)
@@ -109,6 +110,31 @@ async def refresh_task(loop, scheduler):
         gap = resource.get('refresh_gap')
         status = resource.get('refresh_status')
         last_refresh_time = parse_datetime(resource.get('last_refresh_time'))
+        proxy = resource.get('proxy')
+        auth = resource.get('auth')
+
+        if auth:
+            username = auth.get('username')
+            password = auth.get('password')
+            cookie = auth.get('cookie')
+            auth_header = auth.get('auth_header')
+            auth_value = auth.get('auth_value')
+        else:
+            username, password, cookie, auth_header, auth_value = (None,) * 5
+
+        task_data = {
+            'loop': loop,
+            'init_url': link,
+            'resource_id': resource_id,
+            'default_category_id': default_category_id,
+            'default_tag_id': default_tag_id,
+            'proxy': proxy,
+            'username': username,
+            'password': password,
+            'cookie': cookie,
+            'auth_header': auth_header,
+            'auth_value': auth_value
+        }
 
         # (0, '从未刷新过')
         # (1, '刷新失败')
@@ -124,19 +150,17 @@ async def refresh_task(loop, scheduler):
                 job.modify(
                     next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC))
                 )
-                return None
-
-        scheduler.add_job(
-            func=spider_class.get_spider(loop, link, resource_id=resource_id, default_category_id=default_category_id, default_tag_id=default_tag_id),
-            args=None,
-            trigger='date',
-            next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
-            id=task_id,
-            name=resource.get("name"),
-            misfire_grace_time=600,
-            coalesce=True,
-            replace_existing=True
-        )
+        else:
+            scheduler.add_job(
+                func=spider_class.get_spider(**task_data),
+                trigger='date',
+                next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)),
+                id=task_id,
+                name=resource.get("name"),
+                misfire_grace_time=600,
+                coalesce=True,
+                replace_existing=True
+            )
 
 
 def run():
@@ -152,10 +176,12 @@ def run():
     scheduler.add_job(
         func=refresh_task,
         args=(loop, scheduler),
-        trigger='interval',
-        seconds=5,
+        trigger='cron',
+        second='*/10',
         misfire_grace_time=600,
         next_run_time=datetime.datetime.now(),
+        max_instances=2,
+        coalesce=True,
         id='refresh-task'
     )
     scheduler.start()
@@ -166,5 +192,6 @@ def run():
         loop.run_forever()
     except KeyboardInterrupt:
         logger.info(f'退出......')
+        executor.shutdown(wait=False)
         scheduler.shutdown(wait=False)
         loop.close()

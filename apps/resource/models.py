@@ -1,6 +1,8 @@
 from django.db import models
 from django_extensions.db.models import CreationDateTimeField, ModificationDateTimeField
 
+from ..spider.models import Proxy
+
 
 class Authorization(models.Model):
     """
@@ -77,6 +79,7 @@ class Resource(models.Model):
     refresh_status = models.PositiveSmallIntegerField(verbose_name='刷新状态', choices=REFRESH_STATUS_CHOICES)
     last_refresh_time = models.DateTimeField(verbose_name='上次刷新时间')
     auth = models.ForeignKey(to=Authorization, verbose_name='认证', on_delete=models.SET_NULL, blank=True, null=True)
+    proxy = models.ForeignKey(to=Proxy, verbose_name='代理', on_delete=models.SET_NULL, blank=True, null=True)
 
     category = models.ForeignKey(to=ResourceCategory, verbose_name='分类', on_delete=models.SET_NULL, blank=True, null=True)
     default_category = models.ForeignKey(ArticleCategory, verbose_name='文章默认分类', on_delete=models.SET_NULL, blank=True, null=True)

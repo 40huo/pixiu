@@ -2,6 +2,23 @@ from django.db import models
 from django_extensions.db.models import CreationDateTimeField, ModificationDateTimeField
 
 
+class Proxy(models.Model):
+    """
+    代理
+    """
+    name = models.CharField(verbose_name='名称', max_length=128)
+    addr = models.CharField(verbose_name='地址', max_length=128, unique=True)
+    created = CreationDateTimeField(verbose_name='创建时间')
+    updated = ModificationDateTimeField(verbose_name='更新时间')
+
+    def __str__(self):
+        return self.addr
+
+    class Meta:
+        verbose_name = '代理'
+        verbose_name_plural = verbose_name
+
+
 class Spider(models.Model):
     """
     爬虫

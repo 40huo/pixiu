@@ -11,7 +11,11 @@ from utils.log import Logger
 logger = Logger(__name__).get_logger()
 
 
-class DeepMix(BaseSpider):
+def get_spider(*args, **kwargs):
+    return DeepMixSpider(*args, **kwargs).run
+
+
+class DeepMixSpider(BaseSpider):
     """
     暗网中文论坛
     """

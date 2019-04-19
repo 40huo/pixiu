@@ -13,8 +13,8 @@ from utils.log import Logger
 logger = Logger(__name__).get_logger()
 
 
-def get_spider(init_url: str, *args, **kwargs):
-    return TuguaSpider(init_url, *args, **kwargs).run
+def get_spider(*args, **kwargs):
+    return TuguaSpider(*args, **kwargs).run
 
 
 class TuguaSpider(BaseSpider):

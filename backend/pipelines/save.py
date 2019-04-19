@@ -42,7 +42,7 @@ async def consume(loop, queue):
     消费队列数据
     :return:
     """
-    from backend import executor
+    from backend.scheduler import executor
 
     while True:
         data = await queue.get()
