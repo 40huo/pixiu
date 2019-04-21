@@ -6,7 +6,6 @@ django
 aiohttp
 coloredlogs
 lxml
-html5lib
 beautifulsoup4
 django-environ
 django-extensions

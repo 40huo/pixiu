@@ -3,7 +3,7 @@ import datetime
 import urllib.parse
 
 import aiohttp
-from lxml import etree
+from bs4 import BeautifulSoup
 
 from backend.pipelines import save
 from backend.pipelines.save import html_clean
@@ -34,16 +34,11 @@ class TuguaSpider(BaseSpider):
         """
         article_html = await self.get_html(article_link, session)
         if article_html:
-            selector = etree.HTML(article_html)
+            soup = BeautifulSoup(article_html, 'lxml')
 
-            tugua_title = selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[1]/td/div/span/span/a[2]/text()')[0]
-            tugua_content = etree.tounicode(
-                selector.xpath('/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/div[2]')[0],
-                method='html'
-            )
-            publish_time = selector.xpath(
-                '/html/body/table/tbody/tr/td[1]/div/table/tbody/tr[2]/td/table[1]/tbody/tr/td/div/span/text()'
-            )[0]
+            tugua_title = soup.select('td.oblog_t_4')[0].find_all('a')[1].get_text()
+            tugua_content = str(soup.select('div.oblog_text')[0])
+            publish_time = soup.select('span.oblog_text')[0].get_text()
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
             clean_content = html_clean(tugua_content)
 
@@ -68,9 +63,9 @@ class TuguaSpider(BaseSpider):
         """
         init_html = await self.get_html(init_url, session)
         if init_html:
-            selector = etree.HTML(init_html)
-            post_nodes = selector.xpath('/html/body/table/tbody/tr/td[1]/div/div[1]/ul/li')
-            relative_links = [node.xpath('./a/@href')[0] for node in post_nodes[:max_count]]
+            soup = BeautifulSoup(init_html, 'lxml')
+            node_list = soup.select('ul > li')
+            relative_links = [node.find('a').get('href') for node in node_list[:max_count]]
             detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
             return detail_links
 
