@@ -34,7 +34,7 @@ async def produce(queue, data):
     :return:
     """
     await queue.put(data)
-    logger.debug(f'写入存储队列 {data}')
+    logger.debug(f"写入存储队列 {data.get('title')}")
 
 
 async def consume(loop, queue):
@@ -46,7 +46,7 @@ async def consume(loop, queue):
 
     while True:
         data = await queue.get()
-        logger.debug(f'读取存储队列 {data}')
+        logger.debug(f"读取存储队列 {data.get('title')}")
 
         post_data = {
             'title': data.get('title'),
@@ -67,6 +67,6 @@ async def consume(loop, queue):
             post_data
         )
         if req.status_code == 201:
-            logger.info('存储成功')
+            logger.debug(f"存储成功 {data.get('title')}")
         else:
             logger.warning(f'存储失败，状态码 {req.status_code} 响应详情 {req.text}')
