@@ -89,12 +89,9 @@ WSGI_APPLICATION = 'pixiu.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-db_config = env.db()
-if 'mysql' in db_config.get('ENGINE'):
-    db_config['OPTIONS'] = {'charset': 'utf8mb4'}
 
 DATABASES = {
-    'default': db_config
+    'default': env.db()
 }
 
 # Password validation
