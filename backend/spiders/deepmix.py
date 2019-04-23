@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 from backend.pipelines import save
 from backend.spiders.base import BaseSpider
+from utils import enums
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
@@ -142,6 +143,9 @@ class DeepMixSpider(BaseSpider):
                 data_list = await self.loop.run_in_executor(self.executor, self.parse, zone)
                 for data in data_list:
                     await self.save(data=data)
+
+                # 爬取结束，更新resource中的last_refresh_time
+                await self.update_resource()
         else:
             logger.error('登陆失败，退出')
-            return None
+            await self.update_resource(status=enums.ResourceRefreshStatus.failed.value)

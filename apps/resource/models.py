@@ -1,6 +1,7 @@
 from django.db import models
 from django_extensions.db.models import CreationDateTimeField, ModificationDateTimeField
 
+from utils import enums
 from ..spider.models import Proxy
 
 
@@ -56,12 +57,7 @@ class Resource(models.Model):
     from apps.article.models import ArticleCategory, ArticleTag
 
     # 刷新状态
-    REFRESH_STATUS_CHOICES = (
-        (0, '从未刷新过'),
-        (1, '刷新失败'),
-        (2, '正在刷新'),
-        (3, '上次刷新成功'),
-    )
+    REFRESH_STATUS_CHOICES = enums.ResourceRefreshStatus.choices()
 
     RESOURCE_LEVEL_CHOICES = (
         (0, '公开'),
@@ -86,7 +82,7 @@ class Resource(models.Model):
     default_tag = models.ForeignKey(ArticleTag, verbose_name='文章默认标签', on_delete=models.SET_NULL, blank=True, null=True)
     level = models.PositiveSmallIntegerField(verbose_name='等级', choices=RESOURCE_LEVEL_CHOICES)
 
-    is_open = models.BooleanField(verbose_name='是否开启', default=True)
+    is_enabled = models.BooleanField(verbose_name='是否开启', default=True)
     is_deleted = models.BooleanField(verbose_name='是否删除', default=False)
 
     created = CreationDateTimeField(verbose_name='创建时间')

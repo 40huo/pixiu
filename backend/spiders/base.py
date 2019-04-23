@@ -3,6 +3,7 @@ import datetime
 import hashlib
 
 from backend.scheduler import executor
+from utils import enums
 from utils.http_req import send_req
 from utils.log import Logger
 
@@ -67,7 +68,7 @@ class BaseSpider(object):
         """
         return hashlib.sha1(content).hexdigest()
 
-    async def update_resource(self):
+    async def update_resource(self, status: int = enums.ResourceRefreshStatus.success.value):
         req = await self.loop.run_in_executor(
             executor,
             send_req,
@@ -75,7 +76,7 @@ class BaseSpider(object):
             f'/api/resource/{self.resource_id}/',
             {
                 'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
-                'refresh_status': 3
+                'refresh_status': status
             },
         )
         if req.status_code == 200:

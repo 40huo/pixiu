@@ -12,13 +12,13 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
 
 from backend.pipelines import save
-from utils import notify
+from utils import notify, enums
 from utils.http_req import send_req
 from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
-spider_id_re = re.compile(r'\((\d+)\)$')
+spider_id_re = re.compile(r'\((\d+),(\d+)\)$')
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 
 
@@ -32,6 +32,7 @@ def spider_listener(event):
         match = spider_id_re.search(event.job_id)
         if match:
             spider_id = int(match.group(1))
+            resource_id = int(match.group(2))
             if event.code == EVENT_JOB_ERROR:
                 msg = f'任务 {event.job_id} 出现异常 {event.traceback}'
                 logger.error(msg)
@@ -70,6 +71,19 @@ def spider_listener(event):
                 logger.info('任务异常事件上报成功')
             else:
                 logger.warning(f'任务异常事件上报失败，状态码 {req.status_code}，响应详情 {req.text}')
+
+            req = send_req(
+                method='patch',
+                url=f'/api/resource/{resource_id}/',
+                data={
+                    'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
+                    'refresh_status': enums.ResourceRefreshStatus.failed.value
+                }
+            )
+            if req.status_code == 200:
+                logger.info('更新订阅源状态成功')
+            else:
+                logger.warning(f'更新订阅源状态失败，状态码 {req.status_code}，响应详情 {req.text}')
         else:
             logger.error(f'任务id中不存在爬虫id {event}')
             notify.send_wechat(title='Pixiu任务异常-任务id中不存在爬虫id', content=event)
@@ -102,6 +116,10 @@ async def refresh_task(loop, scheduler):
 
     result = req.json()
     for resource in result:
+        is_enabled = resource.get('is_enabled')
+        if not is_enabled:
+            continue
+
         spider_class = importlib.import_module(f'.{resource.get("spider_type").get("filename")}', package='backend.spiders')
         link = resource.get('link')
         resource_id = resource.get('id')
@@ -143,7 +161,7 @@ async def refresh_task(loop, scheduler):
         else:
             next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
 
-        task_id = f'{resource.get("name")}-({resource.get("spider_type").get("id")})'
+        task_id = f'{resource.get("name")}-({resource.get("spider_type").get("id")},{resource_id})'
 
         for job in scheduler.get_jobs():
             if job.id == task_id:
