@@ -26,7 +26,7 @@ class DeepMixSpider(BaseSpider):
     deepmix_index_url = ''
 
     def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
-        super().__init__(loop, init_url, headers, resource_id, default_category_id, default_tag_id, *args, **kwargs)
+        super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
 
         proxy = kwargs.pop('proxy', None)
         if proxy is None:
@@ -105,10 +105,10 @@ class DeepMixSpider(BaseSpider):
 
     def parse(self, path) -> list:
         result_list = list()
-        url = f'{self.deepmix_index_url}/{path}'
-        req = self.session.get(url)
+        list_url = f'{self.deepmix_index_url}/{path}'
+        req = self.session.get(list_url)
         soup = BeautifulSoup(req.text, 'lxml')
-        data_table = soup.select('.m_area_a > tbody:nth-of-type(1) > tr')
+        data_table = soup.select('.m_area_a > tr')
         for i in data_table:
             if i.find_next('td').get_text().isdigit():
                 pub_time = datetime.datetime.strptime(i.find_all('td')[1].get_text(), '%m-%d %H:%M').replace(year=datetime.datetime.today().year)
@@ -119,12 +119,12 @@ class DeepMixSpider(BaseSpider):
                 result_list.append({
                     'title': title,
                     'url': url,
-                    'content': f"根据法律法规，详细内容不采集，请自行访问 {a_tag.get('href')} 查看。",
+                    'content': f"根据法律法规，详细内容不采集，请自行访问 {url} 查看。",
                     'publish_time': pub_time,
                     'resource_id': self.resource_id,
                     'default_category_id': self.default_category_id,
                     'default_tag_id': self.default_tag_id,
-                    'hash': self.gen_hash(a_tag.get('href').encode(errors='ignore'))
+                    'hash': self.gen_hash(url.encode(errors='ignore'))
                 })
 
         return result_list

@@ -197,7 +197,6 @@ def run():
         trigger='cron',
         second='*/10',
         misfire_grace_time=600,
-        next_run_time=datetime.datetime.now(),
         max_instances=2,
         coalesce=True,
         id='refresh-task'

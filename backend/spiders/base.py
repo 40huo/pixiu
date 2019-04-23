@@ -80,9 +80,9 @@ class BaseSpider(object):
             },
         )
         if req.status_code == 200:
-            logger.info(f'更新 {self.resource_id} 订阅源last_refresh_time, status成功')
+            logger.info(f'更新 id={self.resource_id} 订阅源last_refresh_time, status成功')
         else:
-            logger.error(f'更新 {self.resource_id} 订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
+            logger.error(f'更新 id={self.resource_id} 订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
 
     async def run(self):
         """
