@@ -163,11 +163,11 @@ async def refresh_task(loop, scheduler):
 
         task_id = f'{resource.get("name")}-({resource.get("spider_type").get("id")},{resource_id})'
 
-        for job in scheduler.get_jobs():
-            if job.id == task_id:
-                job.modify(
-                    next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC))
-                )
+        job = scheduler.get_job(job_id=task_id)
+        if job:
+            job.modify(
+                next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC))
+            )
         else:
             scheduler.add_job(
                 func=spider_class.get_spider(**task_data),
