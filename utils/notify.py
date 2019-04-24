@@ -46,8 +46,3 @@ def send_mail(content, sub='DNSLog发来贺电', recipients=MAIL_RECIPIENTS):
     except Exception as e:
         logger.error(f'Mailgun push failed: {e}', exc_info=True)
         return False
-
-
-if __name__ == '__main__':
-    send_wechat(title='aaabbcc', content='bbbcccddd')
-    send_mail('Senddsdsavsafvewavdsavdsaer!')

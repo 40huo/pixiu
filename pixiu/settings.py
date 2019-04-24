@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/1.11/ref/settings/
 import platform
 
 import environ
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = environ.Path(__file__) - 2
@@ -154,3 +156,11 @@ TOKEN = env.str('TOKEN')
 
 # 日志
 LOG_TYPE = env.list('LOG_TYPE', default=['console'])
+
+# Sentry
+SENTRY_DSN = env.str('SENTRY_DSN', default='')
+if SENTRY_DSN:
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()]
+    )

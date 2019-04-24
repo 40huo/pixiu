@@ -4,7 +4,6 @@ import datetime
 import importlib
 import logging
 import re
-import traceback
 
 import pytz
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_ERROR, EVENT_JOB_MISSED
@@ -12,7 +11,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
 
 from backend.pipelines import save
-from utils import notify, enums
+from utils import enums
 from utils.http_req import send_req
 from utils.log import Logger
 
@@ -86,12 +85,8 @@ def spider_listener(event):
                 logger.warning(f'更新订阅源状态失败，状态码 {req.status_code}，响应详情 {req.text}')
         else:
             logger.error(f'任务id中不存在爬虫id {event}')
-            notify.send_wechat(title='Pixiu任务异常-任务id中不存在爬虫id', content=event)
-            notify.send_mail(content=event, sub='Pixiu任务异常')
     except Exception as e:
         logger.error(f'处理任务异常时出错 {e}', exc_info=True)
-        notify.send_wechat(title='Pixiu任务异常-处理任务异常时出错', content=traceback.format_exc())
-        notify.send_mail(content=traceback.format_exc(), sub='Pixiu任务异常')
 
 
 async def refresh_task(loop, scheduler):
