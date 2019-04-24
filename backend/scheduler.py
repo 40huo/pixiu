@@ -77,7 +77,7 @@ def spider_listener(event):
                 url=f'/api/resource/{resource_id}/',
                 data={
                     'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
-                    'refresh_status': enums.ResourceRefreshStatus.failed.value
+                    'refresh_status': enums.ResourceRefreshStatus.FAIL.value
                 }
             )
             if req.status_code == 200:
@@ -154,10 +154,10 @@ async def refresh_task(loop, scheduler):
             'auth_value': auth_value
         }
 
-        # (0, '从未刷新过')
-        # (1, '刷新失败')
-        if status in (0, 1):
+        if status in (enums.ResourceRefreshStatus.NEVER.value, enums.ResourceRefreshStatus.FAIL.value):
             next_run_time = datetime.datetime.now(tz=pytz.UTC)
+        elif status == enums.ResourceRefreshStatus.RUNNING.value:
+            continue
         else:
             next_run_time = last_refresh_time + datetime.timedelta(hours=gap)
 

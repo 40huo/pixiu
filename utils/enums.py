@@ -12,7 +12,7 @@ class ResourceRefreshStatus(ChoiceEnum):
     """
     订阅源刷新状态
     """
-    never = 0
-    failed = 1
-    refreshing = 2
-    success = 3
+    NEVER = 0
+    FAIL = 1
+    RUNNING = 2
+    SUCCESS = 3

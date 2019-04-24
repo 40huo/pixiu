@@ -68,21 +68,26 @@ class BaseSpider(object):
         """
         return hashlib.sha1(content).hexdigest()
 
-    async def update_resource(self, status: int = enums.ResourceRefreshStatus.success.value):
+    async def update_resource(self, status: int = enums.ResourceRefreshStatus.SUCCESS.value):
+        patch_data = {
+            'refresh_status': status
+        }
+
+        # 正在刷新时不更新刷新时间
+        if status != enums.ResourceRefreshStatus.RUNNING.value:
+            patch_data['last_refresh_time'] = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S')
+
         req = await self.loop.run_in_executor(
             executor,
             send_req,
             'patch',
             f'/api/resource/{self.resource_id}/',
-            {
-                'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
-                'refresh_status': status
-            },
+            patch_data,
         )
         if req.status_code == 200:
-            logger.info(f'更新 id={self.resource_id} 订阅源last_refresh_time, status成功')
+            logger.info(f'更新id={self.resource_id}订阅源last_refresh_time, status成功')
         else:
-            logger.error(f'更新 id={self.resource_id} 订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
+            logger.error(f'更新id={self.resource_id}订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
 
     async def run(self):
         """

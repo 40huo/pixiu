@@ -137,6 +137,7 @@ class DeepMixSpider(BaseSpider):
         await save.produce(save.save_queue, data=data)
 
     async def run(self):
+        await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
         is_login = await self.loop.run_in_executor(self.executor, self.login)
         if is_login:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
@@ -145,7 +146,7 @@ class DeepMixSpider(BaseSpider):
                     await self.save(data=data)
 
                 # 爬取结束，更新resource中的last_refresh_time
-                await self.update_resource()
+                await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)
         else:
             logger.error('登陆失败，退出')
-            await self.update_resource(status=enums.ResourceRefreshStatus.failed.value)
+            await self.update_resource(status=enums.ResourceRefreshStatus.FAIL.value)
