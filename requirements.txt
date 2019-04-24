@@ -9,3 +9,4 @@ lxml
 beautifulsoup4
 django-environ
 django-extensions
+sentry-sdk
