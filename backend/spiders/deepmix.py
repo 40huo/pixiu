@@ -124,7 +124,7 @@ class DeepMixSpider(BaseSpider):
                     'resource_id': self.resource_id,
                     'default_category_id': self.default_category_id,
                     'default_tag_id': self.default_tag_id,
-                    'hash': self.gen_hash(url.encode(errors='ignore'))
+                    'hash': self.gen_hash(a_tag.get('href').encode(errors='ignore'))
                 })
 
         return result_list
