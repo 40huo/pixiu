@@ -1,4 +1,3 @@
-import concurrent.futures
 import datetime
 import re
 
@@ -9,6 +8,7 @@ from backend.pipelines import save
 from backend.spiders.base import BaseSpider
 from utils import enums
 from utils.log import Logger
+from ..scheduler import executor
 
 logger = Logger(__name__).get_logger()
 
@@ -21,7 +21,6 @@ class DeepMixSpider(BaseSpider):
     """
     暗网中文论坛
     """
-    executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
     session = requests.session()
     deepmix_index_url = ''
 
@@ -145,10 +144,10 @@ class DeepMixSpider(BaseSpider):
 
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
-        is_login = await self.loop.run_in_executor(self.executor, self.login)
+        is_login = await self.loop.run_in_executor(executor, self.login)
         if is_login:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
-                data_list = await self.loop.run_in_executor(self.executor, self.parse, zone)
+                data_list = await self.loop.run_in_executor(executor, self.parse, zone)
                 logger.info(f'抓取到 {len(data_list)} 条暗网数据')
                 for data in data_list:
                     await self.save(data=data)
