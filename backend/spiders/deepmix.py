@@ -57,7 +57,7 @@ class DeepMixSpider(BaseSpider):
         init_req = self.session.get(self.init_url)
         match = re.search(r'url=(http://deepmix\w+\.onion)\">', init_req.text)
         if not match:
-            logger.error(f'初始地址失效')
+            logger.error(f'初始地址失效，返回内容 {init_req.text}')
             return False
 
         index_url = match.group(1)
@@ -66,7 +66,7 @@ class DeepMixSpider(BaseSpider):
         index_req = self.session.get(index_url)
         match = re.search(r'url=(/\S+)\">', index_req.text)
         if not match:
-            logger.error(f'首页请求失败')
+            logger.error(f'首页请求失败，返回内容 {index_req.text}')
             return False
 
         pre_login_url = f'{index_url}{match.group(1)}'
@@ -78,13 +78,13 @@ class DeepMixSpider(BaseSpider):
 
         match = re.search(r'autim=(\d+)', pre_login_url)
         if not match:
-            logger.error(f'autim参数获取失败')
+            logger.error(f'autim参数获取失败，返回内容 {pre_login_url}')
             return False
         autim = match.group(1)
 
         match = re.search(r'name=\"sid\" value=\"(\w+)\"', pre_login_req.text)
         if not match:
-            logger.error(f'sid参数获取失败')
+            logger.error(f'sid参数获取失败，返回内容 {pre_login_req.text}')
             return False
         sid = match.group(1)
 
