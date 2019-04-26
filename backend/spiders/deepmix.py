@@ -56,7 +56,7 @@ class DeepMixSpider(BaseSpider):
         logger.debug(f'第一次请求 获取真正入口 {self.init_url}')
         init_req = self.session.get(self.init_url)
         match = re.search(r'url=(http://deepmix\w+\.onion)\">', init_req.text)
-        if '暗网欢迎您' in init_req.text:
+        if self.username in init_req.text:
             return True
         if not match:
             logger.error(f'初始地址失效，返回内容 {init_req.text}')
@@ -68,7 +68,7 @@ class DeepMixSpider(BaseSpider):
         logger.debug(f'第二次请求 获取首页 {index_url}')
         index_req = self.session.get(index_url)
         match = re.search(r'url=(/\S+)\">', index_req.text)
-        if '暗网欢迎您' in index_req.text:
+        if self.username in index_req.text:
             return True
         if not match:
             logger.error(f'首页请求失败，返回内容 {index_req.text}')
@@ -84,7 +84,7 @@ class DeepMixSpider(BaseSpider):
         logger.debug(f'第三次请求 跳转登录页 {pre_login_url}')
         pre_login_req = self.session.get(pre_login_url)
         match = re.search(r'name=\"sid\" value=\"(\w+)\"', pre_login_req.text)
-        if '暗网欢迎您' in pre_login_req.text:
+        if self.username in pre_login_req.text:
             return True
         if not match:
             logger.error(f'sid参数获取失败，返回内容 {pre_login_req.text}')
@@ -103,7 +103,7 @@ class DeepMixSpider(BaseSpider):
         login_url = f'{index_url}/ucp.php?mode=login'
         logger.debug(f'第四次请求 登录POST {login_url}')
         login_req = self.session.post(login_url, data=post_data)
-        if '暗网欢迎您' in login_req.text:
+        if self.username in login_req.text:
             return True
         else:
             logger.error(f'首页内容检测失败')
