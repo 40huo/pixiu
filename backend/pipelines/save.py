@@ -67,8 +67,8 @@ async def consume(loop, queue):
             post_data
         )
         if req.status_code == 201:
-            logger.info('存储成功', extra={'title': data.get('title')})
+            logger.info(f"存储成功 {data.get('title')}")
         elif req.status_code == 400:
-            logger.debug('重复', extra={'resp': data.get('title')})
+            logger.debug(f"重复文章 {data.get('title')}")
         else:
-            logger.error('存储失败', exc_info=True, extra={'status_code': req.status_code, 'resp': req.text})
+            logger.error(f'存储失败，状态码 {req.status_code} 响应详情 {req.text}')
