@@ -10,3 +10,4 @@ beautifulsoup4
 django-environ
 django-extensions
 sentry-sdk
+systemd-python; platform_system == "Linux"
