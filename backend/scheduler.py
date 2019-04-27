@@ -17,6 +17,7 @@ from utils.log import Logger
 
 logger = Logger(__name__).get_logger()
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
+logging.getLogger("django.request").setLevel(logging.ERROR)
 spider_id_re = re.compile(r'\((\d+),(\d+)\)$')
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 

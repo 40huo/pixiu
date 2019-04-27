@@ -51,14 +51,6 @@ class BaseSpider(object):
             logger.error(f'未知错误 {e}', exc_info=True)
             return None
 
-    def save(self, data: dict):
-        """
-        存储数据库
-        :param data: 需要存入队列的数据
-        :return:
-        """
-        raise NotImplementedError('Spider must customize save method!')
-
     @staticmethod
     def gen_hash(content: bytes) -> str:
         """
@@ -85,9 +77,9 @@ class BaseSpider(object):
             patch_data,
         )
         if req.status_code == 200:
-            logger.info(f'更新id={self.resource_id}订阅源last_refresh_time, status成功')
+            logger.info(f'更新 id={self.resource_id} 订阅源刷新时间与状态成功')
         else:
-            logger.error(f'更新id={self.resource_id}订阅源last_refresh_time, status失败，状态码 {req.status_code}，响应 {req.text}')
+            logger.error(f'更新 id={self.resource_id} 订阅源刷新时间与状态失败，状态码 {req.status_code}，响应 {req.text}')
 
     async def run(self):
         """

@@ -70,13 +70,6 @@ class TuguaSpider(BaseSpider):
             detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
             return detail_links
 
-    async def save(self, data: dict):
-        """
-        存储
-        :return:
-        """
-        await save.produce(save.save_queue, data=data)
-
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
         async with aiohttp.ClientSession() as session:
@@ -84,7 +77,7 @@ class TuguaSpider(BaseSpider):
             tasks = [self.parse_article(link, session) for link in article_links]
             for coro in asyncio.as_completed(tasks):
                 data = await coro
-                await self.save(data=data)
+                await save.produce(save.save_queue, data=data)
 
             # 爬取结束，更新resource中的last_refresh_time
             await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)

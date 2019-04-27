@@ -135,25 +135,22 @@ class DeepMixSpider(BaseSpider):
 
         return result_list
 
-    async def save(self, data: dict):
-        """
-        存储
-        :return:
-        """
-        await save.produce(save.save_queue, data=data)
-
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
         is_login = await self.loop.run_in_executor(executor, self.login)
         if is_login:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
                 data_list = await self.loop.run_in_executor(executor, self.parse, zone)
-                logger.info(f'抓取到 {len(data_list)} 条暗网数据')
-                for data in data_list:
-                    await self.save(data=data)
+                if len(data_list):
+                    logger.info(f'抓取到 {len(data_list)} 条暗网数据')
+                    for data in data_list:
+                        await save.produce(save.save_queue, data=data)
 
-                # 爬取结束，更新resource中的last_refresh_time
-                await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)
+                    # 爬取结束，更新resource中的last_refresh_time
+                    await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)
+                else:
+                    logger.error(f'抓取帖子异常')
+                    await self.update_resource(status=enums.ResourceRefreshStatus.FAIL.value)
         else:
             logger.error('登陆失败，退出')
             await self.update_resource(status=enums.ResourceRefreshStatus.FAIL.value)
