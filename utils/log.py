@@ -1,6 +1,7 @@
 import logging
 import logging.config
 import os
+import platform
 
 from pixiu.settings import LOG_TYPE
 
@@ -62,7 +63,7 @@ class Logger(object):
                 },
                 'systemd': {
                     'level': 'DEBUG',
-                    'class': 'systemd.journal.JournalHandler',
+                    'class': 'systemd.journal.JournalHandler' if 'linux' in platform.platform().lower() else 'logging.StreamHandler',
                     'formatter': 'systemd'
                 }
             },

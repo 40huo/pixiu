@@ -23,6 +23,7 @@ class DeepMixSpider(BaseSpider):
     """
     session = requests.session()
     deepmix_index_url = ''
+    REFRESH_LIMIT = 30
 
     def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
         super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
@@ -47,19 +48,26 @@ class DeepMixSpider(BaseSpider):
         self.session.proxies = self.proxy
         self.session.headers = self.headers
 
-    def login(self) -> bool:
+        self.refresh_time = 0
+
+    def refresh_session(self, raw_html: str) -> bool:
         """
-        登录
+        刷新session
         :return:
         """
+        if self.refresh_time > self.REFRESH_LIMIT:
+            logger.warning(f'达到刷新次数上线 {self.REFRESH_LIMIT}')
+            return False
+        else:
+            self.refresh_time += 1
+
         # 第一次
         logger.debug(f'第一次请求 获取真正入口 {self.init_url}')
-        init_req = self.session.get(self.init_url)
-        match = re.search(r'url=(http://deepmix\w+\.onion)\">', init_req.text)
-        if self.username in init_req.text:
+        match = re.search(r'url=(http://deepmix\w+\.onion)\">', raw_html)
+        if self.username in raw_html:
             return True
         if not match:
-            logger.error(f'初始地址失效，返回内容 {init_req.text}')
+            logger.error(f'初始地址失效，返回内容 {raw_html}')
             return False
         index_url = match.group(1)
 
@@ -109,13 +117,47 @@ class DeepMixSpider(BaseSpider):
             logger.error(f'首页内容检测失败')
             return False
 
-    async def parse(self, path) -> list:
+    async def parse_topic(self, topic_url) -> tuple:
+        """
+        解析帖子内容
+        :param topic_url: 
+        :return: 
+        """
+        try:
+            req = await self.loop.run_in_executor(executor, self.session.get, topic_url)
+            if self.username not in req.text:
+                logger.warning(f'页面内容异常，可能返回了节点选择页面')
+                is_session_success = await self.loop.run_in_executor(executor, self.refresh_session, req.text)
+                if is_session_success:
+                    return await self.parse_topic(topic_url)
+                else:
+                    return None, None
+
+            soup = BeautifulSoup(req.text, 'lxml')
+            pub_time = datetime.datetime.strptime(soup.find('p', class_='author').contents[-1].strip(), "%Y年-%m月-%d日 %H:%M")
+            content = save.html_clean(str(soup.find('div', class_='content')))
+
+            return pub_time, content
+        except Exception as e:
+            logger.error(f'获取帖子 {topic_url} 详情异常 {e}', exc_info=True)
+            return None, None
+
+    async def parse_list(self, path) -> list:
+        """
+        解析帖子列表
+        :param path:
+        :return:
+        """
         result_list = list()
         list_url = f'{self.deepmix_index_url}/{path}'
         req = await self.loop.run_in_executor(executor, self.session.get, list_url)
         if self.username not in req.text:
             logger.warning(f'页面内容异常，可能返回了节点选择页面')
-            return []
+            is_session_success = await self.loop.run_in_executor(executor, self.refresh_session, req.text)
+            if is_session_success:
+                return await self.parse_list(path)
+            else:
+                return []
 
         soup = BeautifulSoup(req.text, 'lxml')
         data_table = soup.select('.m_area_a > tr')
@@ -125,16 +167,9 @@ class DeepMixSpider(BaseSpider):
                 topic_url = f"{self.deepmix_index_url}{a_tag.get('href')}"
                 title = a_tag.get_text()
 
-                try:
-                    req = await self.loop.run_in_executor(executor, self.session.get, topic_url)
-                    if self.username not in req.text:
-                        logger.warning(f'页面内容异常，可能返回了节点选择页面')
-                        continue
+                pub_time, content = await self.parse_topic(topic_url=topic_url)
 
-                    soup = BeautifulSoup(req.text, 'lxml')
-                    pub_time = datetime.datetime.strptime(soup.find('p', class_='author').contents[-1].strip(), "%Y年-%m月-%d日 %H:%M")
-                    content = save.html_clean(str(soup.find('div', class_='content')))
-
+                if pub_time and content:
                     result_list.append({
                         'title': title,
                         'url': topic_url,
@@ -145,18 +180,16 @@ class DeepMixSpider(BaseSpider):
                         'default_tag_id': self.default_tag_id,
                         'hash': self.gen_hash(a_tag.get('href').encode(errors='ignore'))
                     })
-                except Exception as e:
-                    logger.error(f'获取帖子 {topic_url} 详情异常 {e}', exc_info=True)
-                    continue
 
         return result_list
 
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
-        is_login = await self.loop.run_in_executor(executor, self.login)
-        if is_login:
+        init_req = await self.loop.run_in_executor(executor, self.session.get, self.init_url)
+        is_session_success = await self.loop.run_in_executor(executor, self.refresh_session, init_req.text)
+        if is_session_success:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
-                data_list = await self.loop.run_in_executor(executor, self.parse, zone)
+                data_list = await self.parse_list(zone)
                 if len(data_list):
                     logger.info(f'抓取到 {len(data_list)} 条暗网数据')
                     for data in data_list:
