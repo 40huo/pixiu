@@ -109,10 +109,14 @@ class DeepMixSpider(BaseSpider):
             logger.error(f'首页内容检测失败')
             return False
 
-    def parse(self, path) -> list:
+    async def parse(self, path) -> list:
         result_list = list()
         list_url = f'{self.deepmix_index_url}/{path}'
-        req = self.session.get(list_url)
+        req = await self.loop.run_in_executor(executor, self.session.get, list_url)
+        if self.username not in req.text:
+            logger.warning(f'页面内容异常，可能返回了节点选择页面')
+            return []
+
         soup = BeautifulSoup(req.text, 'lxml')
         data_table = soup.select('.m_area_a > tr')
         for i in data_table:
@@ -122,7 +126,11 @@ class DeepMixSpider(BaseSpider):
                 title = a_tag.get_text()
 
                 try:
-                    req = self.session.get(topic_url)
+                    req = await self.loop.run_in_executor(executor, self.session.get, topic_url)
+                    if self.username not in req.text:
+                        logger.warning(f'页面内容异常，可能返回了节点选择页面')
+                        continue
+
                     soup = BeautifulSoup(req.text, 'lxml')
                     pub_time = datetime.datetime.strptime(soup.find('p', class_='author').contents[-1].strip(), "%Y年-%m月-%d日 %H:%M")
                     content = save.html_clean(str(soup.find('div', class_='content')))
