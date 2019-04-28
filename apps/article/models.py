@@ -42,14 +42,14 @@ class Article(models.Model):
     """
     from apps.resource.models import Resource
 
-    title = models.CharField(verbose_name='标题', max_length=256)
+    title = models.CharField(verbose_name='标题', max_length=256, db_index=True)
     url = models.URLField(verbose_name='原始地址', max_length=256)
     content = models.TextField(verbose_name='文章内容', blank=True)
     pub_time = models.DateTimeField(verbose_name='发布时间', default=timezone.now)
     category = models.ForeignKey(to=ArticleCategory, verbose_name='分类', on_delete=models.SET_NULL, blank=True, null=True)
     tag = models.ManyToManyField(to=ArticleTag, verbose_name='标签', blank=True)
     source = models.ForeignKey(to=Resource, verbose_name='订阅源', on_delete=models.CASCADE)
-    hash = models.CharField(verbose_name='文章哈希', max_length=512, default='')
+    hash = models.CharField(verbose_name='文章哈希', max_length=512, default='', db_index=True)
     created = CreationDateTimeField(verbose_name='创建时间')
     updated = ModificationDateTimeField(verbose_name='更新时间')
 
