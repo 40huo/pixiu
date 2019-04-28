@@ -117,21 +117,29 @@ class DeepMixSpider(BaseSpider):
         data_table = soup.select('.m_area_a > tr')
         for i in data_table:
             if i.find_next('td').get_text().isdigit():
-                pub_time = datetime.datetime.strptime(i.find_all('td')[1].get_text(), '%m-%d %H:%M').replace(year=datetime.datetime.today().year)
                 a_tag = i.find('div', {'class': 'length_400'}).find_next('a')
-                url = f"{self.deepmix_index_url}{a_tag.get('href')}"
+                topic_url = f"{self.deepmix_index_url}{a_tag.get('href')}"
                 title = a_tag.get_text()
 
-                result_list.append({
-                    'title': title,
-                    'url': url,
-                    'content': f"根据法律法规，详细内容不采集，请自行访问 {url} 查看。",
-                    'publish_time': pub_time,
-                    'resource_id': self.resource_id,
-                    'default_category_id': self.default_category_id,
-                    'default_tag_id': self.default_tag_id,
-                    'hash': self.gen_hash(a_tag.get('href').encode(errors='ignore'))
-                })
+                try:
+                    req = self.session.get(topic_url)
+                    soup = BeautifulSoup(req.text, 'lxml')
+                    pub_time = datetime.datetime.strptime(soup.find('p', class_='author').contents[-1].strip(), "%Y年-%m月-%d日 %H:%M")
+                    content = save.html_clean(str(soup.find('div', class_='content')))
+
+                    result_list.append({
+                        'title': title,
+                        'url': topic_url,
+                        'content': content,
+                        'publish_time': pub_time,
+                        'resource_id': self.resource_id,
+                        'default_category_id': self.default_category_id,
+                        'default_tag_id': self.default_tag_id,
+                        'hash': self.gen_hash(a_tag.get('href').encode(errors='ignore'))
+                    })
+                except Exception as e:
+                    logger.error(f'获取帖子 {topic_url} 详情异常 {e}', exc_info=True)
+                    continue
 
         return result_list
 
