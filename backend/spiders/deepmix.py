@@ -61,7 +61,11 @@ class DeepMixSpider(BaseSpider):
         else:
             self.refresh_time += 1
 
-        # 第一次
+        if '缓存已经过期或点击太快' in raw_html:
+            # 第一次
+            init_req = self.session.get(self.init_url)
+            raw_html = init_req.text
+
         logger.debug(f'第一次请求 获取真正入口 {self.init_url}')
         match = re.search(r'url=(http://deepmix\w+\.onion)\">', raw_html)
         if self.username in raw_html:
@@ -163,7 +167,7 @@ class DeepMixSpider(BaseSpider):
         data_table = soup.select('.m_area_a > tr')
         for i in data_table:
             if i.find_next('td').get_text().isdigit():
-                a_tag = i.find('div', {'class': 'length_400'}).find_next('a')
+                a_tag = i.find('div', class_='length_400').find_next('a')
                 topic_url = f"{self.deepmix_index_url}{a_tag.get('href')}"
                 title = a_tag.get_text()
 
