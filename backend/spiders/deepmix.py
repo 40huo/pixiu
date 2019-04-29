@@ -50,76 +50,68 @@ class DeepMixSpider(BaseSpider):
 
         self.refresh_time = 0
 
-    def refresh_session(self, raw_html: str) -> bool:
+    def _fetch_html(self, url, method: str = 'get', post_data: dict = None):
+        if method == 'get':
+            req = self.session.get(url)
+        elif method == 'post':
+            req = self.session.post(url=url, data=post_data)
+        else:
+            logger.warning(f'不支持的请求方法 {method}')
+            return None
+
+        return self._verify_session(raw_html=req.text)
+
+    def _verify_session(self, raw_html: str) -> bool:
         """
         刷新session
         :return:
         """
+        init_re = re.compile(r'缓存已经过期或点击太快')
+        index_re = re.compile(r'url=(http://deepmix\w+\.onion)\">')
+        pre_login_re = re.compile(r'url=(/\S+)\">')
+        autim_re = re.compile(r'id=\"autim\" value=\"(\d+)\"')
+        sid_re = re.compile(r'name=\"sid\" value=\"(\w+)\"')
+
         if self.refresh_time > self.REFRESH_LIMIT:
             logger.warning(f'达到刷新次数上线 {self.REFRESH_LIMIT}')
             return False
         else:
             self.refresh_time += 1
 
-        if '缓存已经过期或点击太快' in raw_html:
-            # 第一次
-            init_req = self.session.get(self.init_url)
-            raw_html = init_req.text
-
-        logger.debug(f'第一次请求 获取真正入口 {self.init_url}')
-        match = re.search(r'url=(http://deepmix\w+\.onion)\">', raw_html)
         if self.username in raw_html:
+            logger.info('Session验证成功')
+            self.refresh_time = 0
             return True
-        if not match:
-            logger.error(f'初始地址失效，返回内容 {raw_html}')
-            return False
-        index_url = match.group(1)
-
-        # 第二次
-        self.deepmix_index_url = index_url
-        logger.debug(f'第二次请求 获取首页 {index_url}')
-        index_req = self.session.get(index_url)
-        match = re.search(r'url=(/\S+)\">', index_req.text)
-        if self.username in index_req.text:
-            return True
-        if not match:
-            logger.error(f'首页请求失败，返回内容 {index_req.text}')
-            return False
-        pre_login_url = f'{index_url}{match.group(1)}'
-        match = re.search(r'autim=(\d+)', pre_login_url)
-        if not match:
-            logger.error(f'autim参数获取失败，返回内容 {pre_login_url}')
-            return False
-        autim = match.group(1)
-
-        # 第三次
-        logger.debug(f'第三次请求 跳转登录页 {pre_login_url}')
-        pre_login_req = self.session.get(pre_login_url)
-        match = re.search(r'name=\"sid\" value=\"(\w+)\"', pre_login_req.text)
-        if self.username in pre_login_req.text:
-            return True
-        if not match:
-            logger.error(f'sid参数获取失败，返回内容 {pre_login_req.text}')
-            return False
-        sid = match.group(1)
-
-        # 第四次
-        post_data = {
-            'sid': sid,
-            'redirect': 'index.php',
-            'login': '登录',
-            'autim': autim,
-            'username': self.username,
-            'password': self.password
-        }
-        login_url = f'{index_url}/ucp.php?mode=login'
-        logger.debug(f'第四次请求 登录POST {login_url}')
-        login_req = self.session.post(login_url, data=post_data)
-        if self.username in login_req.text:
-            return True
+        elif init_re.search(raw_html) or raw_html == '':
+            # 第一次
+            logger.info(f'请求初始页面 {self.init_url}')
+            return self._fetch_html(url=self.init_url, method='get')
+        elif index_re.search(raw_html):
+            # 获取到首页入口
+            index_url = index_re.search(raw_html).group(1)
+            self.deepmix_index_url = index_url
+            logger.info(f'请求首页 {index_url}')
+            return self._fetch_html(url=index_url, method='get')
+        elif pre_login_re.search(raw_html):
+            pre_login_url = f'{self.deepmix_index_url}{pre_login_re.search(raw_html).group(1)}'
+            logger.info(f'请求登录跳转页 {pre_login_url}')
+            return self._fetch_html(url=pre_login_url, method='get')
+        elif sid_re.search(raw_html):
+            sid = sid_re.search(raw_html).group(1)
+            autim = autim_re.search(raw_html).group(1)
+            post_data = {
+                'sid': sid,
+                'redirect': 'index.php',
+                'login': '登录',
+                'autim': autim,
+                'username': self.username,
+                'password': self.password
+            }
+            login_url = f'{self.deepmix_index_url}/ucp.php?mode=login'
+            logger.info(f'发送登录请求 {login_url}')
+            return self._fetch_html(url=login_url, method='post', post_data=post_data)
         else:
-            logger.error(f'首页内容检测失败')
-            return False
+            logger.error(f'Session验证失败，未知HTML内容 {raw_html}')
 
     async def parse_topic(self, topic_url) -> tuple:
         """
@@ -131,7 +123,7 @@ class DeepMixSpider(BaseSpider):
             req = await self.loop.run_in_executor(executor, self.session.get, topic_url)
             if self.username not in req.text:
                 logger.warning(f'页面内容异常，可能返回了节点选择页面')
-                is_session_success = await self.loop.run_in_executor(executor, self.refresh_session, req.text)
+                is_session_success = await self.loop.run_in_executor(executor, self._verify_session, req.text)
                 if is_session_success:
                     return await self.parse_topic(topic_url)
                 else:
@@ -157,7 +149,7 @@ class DeepMixSpider(BaseSpider):
         req = await self.loop.run_in_executor(executor, self.session.get, list_url)
         if self.username not in req.text:
             logger.warning(f'页面内容异常，可能返回了节点选择页面')
-            is_session_success = await self.loop.run_in_executor(executor, self.refresh_session, req.text)
+            is_session_success = await self.loop.run_in_executor(executor, self._verify_session, req.text)
             if is_session_success:
                 return await self.parse_list(path)
             else:
@@ -189,8 +181,7 @@ class DeepMixSpider(BaseSpider):
 
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
-        init_req = await self.loop.run_in_executor(executor, self.session.get, self.init_url)
-        is_session_success = await self.loop.run_in_executor(executor, self.refresh_session, init_req.text)
+        is_session_success = await self.loop.run_in_executor(executor, self._verify_session, '')
         if is_session_success:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
                 data_list = await self.parse_list(zone)
