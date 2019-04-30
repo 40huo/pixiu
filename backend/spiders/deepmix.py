@@ -3,6 +3,7 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
 
 from backend.pipelines import save
 from backend.spiders.base import BaseSpider
@@ -47,6 +48,9 @@ class DeepMixSpider(BaseSpider):
         self.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1; rv:60.0) Gecko/20100101 Firefox/60.0'
         self.session.proxies = self.proxy
         self.session.headers = self.headers
+
+        self.session.mount('http://', HTTPAdapter(max_retries=3))
+        self.session.mount('https://', HTTPAdapter(max_retries=3))
 
         self.refresh_time = 0
 
@@ -113,19 +117,19 @@ class DeepMixSpider(BaseSpider):
         else:
             logger.error(f'Session验证失败，未知HTML内容 {raw_html}')
 
-    async def parse_topic(self, topic_url) -> tuple:
+    def parse_topic(self, topic_url) -> tuple:
         """
         解析帖子内容
         :param topic_url: 
         :return: 
         """
         try:
-            req = await self.loop.run_in_executor(executor, self.session.get, topic_url)
+            req = self.session.get(topic_url)
             if self.username not in req.text:
                 logger.warning(f'页面内容异常，可能返回了节点选择页面')
-                is_session_success = await self.loop.run_in_executor(executor, self._verify_session, req.text)
+                is_session_success = self._verify_session(req.text)
                 if is_session_success:
-                    return await self.parse_topic(topic_url)
+                    return self.parse_topic(topic_url)
                 else:
                     return None, None
 
@@ -138,20 +142,21 @@ class DeepMixSpider(BaseSpider):
             logger.error(f'获取帖子 {topic_url} 详情异常 {e}', exc_info=True)
             return None, None
 
-    async def parse_list(self, path) -> list:
+    def parse_list(self, path) -> list:
         """
         解析帖子列表
+        单线程减少session失效的情况
         :param path:
         :return:
         """
         result_list = list()
         list_url = f'{self.deepmix_index_url}/{path}'
-        req = await self.loop.run_in_executor(executor, self.session.get, list_url)
+        req = self.session.get(list_url)
         if self.username not in req.text:
             logger.warning(f'页面内容异常，可能返回了节点选择页面')
-            is_session_success = await self.loop.run_in_executor(executor, self._verify_session, req.text)
+            is_session_success = self._verify_session(req.text)
             if is_session_success:
-                return await self.parse_list(path)
+                return self.parse_list(path)
             else:
                 return []
 
@@ -163,8 +168,7 @@ class DeepMixSpider(BaseSpider):
                 topic_url = f"{self.deepmix_index_url}{a_tag.get('href')}"
                 title = a_tag.get_text()
 
-                pub_time, content = await self.parse_topic(topic_url=topic_url)
-
+                pub_time, content = self.parse_topic(topic_url=topic_url)
                 if pub_time and content:
                     result_list.append({
                         'title': title,
@@ -184,7 +188,7 @@ class DeepMixSpider(BaseSpider):
         is_session_success = await self.loop.run_in_executor(executor, self._verify_session, '')
         if is_session_success:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
-                data_list = await self.parse_list(zone)
+                data_list = await self.loop.run_in_executor(executor, self.parse_list, zone)
                 if len(data_list):
                     logger.info(f'抓取到 {len(data_list)} 条暗网数据')
                     for data in data_list:

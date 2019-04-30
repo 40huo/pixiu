@@ -9,6 +9,7 @@ import pytz
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
+from rest_framework.reverse import reverse
 
 from backend.pipelines import save
 from utils import enums
@@ -66,7 +67,7 @@ def spider_listener(event):
                     'spider': spider_id
                 }
 
-            req = send_req(method='post', url='/api/spider-event/', data=post_data)
+            req = send_req(method='post', url=reverse(viewname='spider-event-list'), data=post_data)
             if req.status_code == 201:
                 logger.info('任务异常事件上报成功')
             else:
@@ -74,7 +75,7 @@ def spider_listener(event):
 
             req = send_req(
                 method='patch',
-                url=f'/api/resource/{resource_id}/',
+                url=reverse(viewname='spider-event-detail', args=[resource_id]),
                 data={
                     'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
                     'refresh_status': enums.ResourceRefreshStatus.FAIL.value
@@ -101,7 +102,7 @@ async def refresh_task(loop, scheduler):
         executor,
         send_req,
         'get',
-        '/api/resource/'
+        reverse(viewname='resource-list')
     )
     if req.status_code == 200:
         logger.debug('请求/api/resource/成功')

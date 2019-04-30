@@ -2,6 +2,8 @@ import asyncio
 import datetime
 import hashlib
 
+from rest_framework.reverse import reverse
+
 from backend.scheduler import executor
 from utils import enums
 from utils.http_req import send_req
@@ -73,7 +75,7 @@ class BaseSpider(object):
             executor,
             send_req,
             'patch',
-            f'/api/resource/{self.resource_id}/',
+            reverse(viewname='resource-detail', args=[self.resource_id]),
             patch_data,
         )
         if req.status_code == 200:

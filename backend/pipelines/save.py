@@ -2,6 +2,7 @@ import asyncio
 import datetime
 
 from lxml.html.clean import Cleaner
+from rest_framework.reverse import reverse
 
 from utils.http_req import send_req
 from utils.log import Logger
@@ -63,7 +64,7 @@ async def consume(loop, queue):
             executor,
             send_req,
             'post',
-            '/api/article/',
+            reverse(viewname='article-list'),
             post_data
         )
         if req.status_code == 201:
