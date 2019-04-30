@@ -62,7 +62,7 @@ class Logger(object):
                     'backupCount': 5
                 },
                 'systemd': {
-                    'level': 'DEBUG',
+                    'level': 'INFO',
                     'class': 'systemd.journal.JournalHandler' if 'linux' in platform.platform().lower() else 'logging.StreamHandler',
                     'formatter': 'systemd'
                 }
