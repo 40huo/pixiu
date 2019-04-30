@@ -1,9 +1,9 @@
-import asyncio
 import datetime
 import hashlib
 
 from rest_framework.reverse import reverse
 
+from backend.pipelines import save
 from backend.scheduler import executor
 from utils import enums
 from utils.http_req import send_req
@@ -25,7 +25,6 @@ class BaseSpider(object):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36'
         }
 
-    @asyncio.coroutine
     async def get_html(self, url: str, session, method: str = 'GET', post_data: str = None, encoding: str = None):
         """
         获取HTML内容
@@ -61,6 +60,15 @@ class BaseSpider(object):
         :return:
         """
         return hashlib.sha1(content).hexdigest()
+
+    @staticmethod
+    async def save(data):
+        """
+        推到存储队列中
+        :param data:
+        :return:
+        """
+        await save.produce(save.save_queue, data=data)
 
     async def update_resource(self, status: int = enums.ResourceRefreshStatus.SUCCESS.value):
         patch_data = {

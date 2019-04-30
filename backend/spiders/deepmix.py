@@ -192,7 +192,7 @@ class DeepMixSpider(BaseSpider):
                 if len(data_list):
                     logger.info(f'抓取到 {len(data_list)} 条暗网数据')
                     for data in data_list:
-                        await save.produce(save.save_queue, data=data)
+                        await self.save(data=data)
 
                     # 爬取结束，更新resource中的last_refresh_time
                     await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)

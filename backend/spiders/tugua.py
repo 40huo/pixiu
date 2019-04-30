@@ -5,7 +5,6 @@ import urllib.parse
 import aiohttp
 from bs4 import BeautifulSoup
 
-from backend.pipelines import save
 from backend.pipelines.save import html_clean
 from backend.spiders.base import BaseSpider
 from utils import enums
@@ -77,7 +76,7 @@ class TuguaSpider(BaseSpider):
             tasks = [self.parse_article(link, session) for link in article_links]
             for coro in asyncio.as_completed(tasks):
                 data = await coro
-                await save.produce(save.save_queue, data=data)
+                await self.save(data=data)
 
             # 爬取结束，更新resource中的last_refresh_time
             await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)
