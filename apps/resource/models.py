@@ -83,7 +83,6 @@ class Resource(models.Model):
     level = models.PositiveSmallIntegerField(verbose_name='等级', choices=RESOURCE_LEVEL_CHOICES)
 
     is_enabled = models.BooleanField(verbose_name='是否开启', default=True)
-    is_deleted = models.BooleanField(verbose_name='是否删除', default=False)
 
     created = CreationDateTimeField(verbose_name='创建时间')
     updated = ModificationDateTimeField(verbose_name='更新时间')
