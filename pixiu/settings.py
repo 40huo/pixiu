@@ -28,7 +28,9 @@ if not core_env:
     else:
         core_env = 'prod'
 
-env.read_env(f"{BASE_DIR.path('.envs')}/{core_env}.env")
+# 指定encoding
+with open(f"{BASE_DIR.path('.envs')}/{core_env}.env", encoding='utf-8') as f:
+    env.read_env(f)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/

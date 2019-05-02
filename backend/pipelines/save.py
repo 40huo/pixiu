@@ -11,6 +11,21 @@ save_queue = asyncio.Queue(maxsize=1024)
 logger = Logger(__name__).get_logger()
 
 
+def change_referer_policy(tag_obj, tag_name: str, referrer_policy: 'str' = 'no-referrer'):
+    """
+    处理Referrer Policy
+    :param tag_obj:
+    :param tag_name: 标签名
+    :param referrer_policy:
+    :return:
+    """
+    tag_list = tag_obj.find_all(tag_name)
+    for tag in tag_list:
+        tag['referrerPolicy'] = referrer_policy
+
+    return tag_obj
+
+
 def html_clean(html_content):
     """
     清理HTML中的无用样式、脚本等

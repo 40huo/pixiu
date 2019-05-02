@@ -5,7 +5,7 @@ import urllib.parse
 import aiohttp
 from bs4 import BeautifulSoup
 
-from backend.pipelines.save import html_clean
+from backend.pipelines.save import html_clean, change_referer_policy
 from backend.spiders.base import BaseSpider
 from utils import enums
 from utils.log import Logger
@@ -37,15 +37,16 @@ class TuguaSpider(BaseSpider):
             soup = BeautifulSoup(article_html, 'lxml')
 
             tugua_title = soup.select('td.oblog_t_4')[0].find_all('a')[1].get_text()
-            tugua_content = str(soup.select('div.oblog_text')[0])
+            origin_content = str(soup.select('div.oblog_text')[0])
+            no_referer_content = str(change_referer_policy(soup.find('div', class_='oblog_text'), tag_name='img'))
             publish_time = soup.select('span.oblog_text')[0].get_text()
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
-            clean_content = html_clean(tugua_content)
+            clean_content = html_clean(origin_content)
 
             return {
                 'title': tugua_title,
                 'url': article_link,
-                'content': clean_content,
+                'content': no_referer_content,
                 'publish_time': publish_time,
                 'resource_id': self.resource_id,
                 'default_category_id': self.default_category_id,
