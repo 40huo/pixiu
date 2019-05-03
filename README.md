@@ -28,7 +28,7 @@ RSS作为上一个资讯阅读领域的热点技术，在21世纪的今天已经
 
 在本项目启动之初，Feed43在国内的访问速度不理想，RSSHub项目的关注度还较低，但由于种种原因，本项目的开发一度停滞，直到2019年初才完成了基础功能的开发，作为一个「智能」RSS项目，功能上的独创性和先进性已经不足，但仍是一个有独特场景的Python后端项目。
 
-##技术路线 Technical Roadmap
+## 技术路线 Technical Roadmap
 
 本项目基于Django Web框架开发，由Django REST Framework提供REST API服务，由 `django-environ` 提供配置分离功能。爬虫部分基于Asyncio和aiohttp，在保证爬取效率的同时尽量减少资源消耗。
 
