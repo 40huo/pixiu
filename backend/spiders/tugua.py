@@ -25,7 +25,7 @@ class TuguaSpider(BaseSpider):
     def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
         super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
 
-    async def parse_article(self, article_link: str, session) -> dict:
+    async def parse_article(self, article_link: str, session):
         """
         解析文章内容
         :param article_link: 文章链接
@@ -36,14 +36,14 @@ class TuguaSpider(BaseSpider):
         if article_html:
             soup = BeautifulSoup(article_html, 'lxml')
 
-            tugua_title = soup.select('td.oblog_t_4')[0].find_all('a')[1].get_text()
-            origin_content = str(soup.select('div.oblog_text')[0])
+            tugua_title = soup.find('td', class_='oblog_t_4').find_all('a')[1].get_text()
+            origin_content = str(soup.find('div', class_='oblog_text'))
             no_referer_content = str(change_referer_policy(soup.find('div', class_='oblog_text'), tag_name='img'))
             publish_time = soup.select('span.oblog_text')[0].get_text()
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
             clean_content = html_clean(origin_content)
 
-            return {
+            await self.save({
                 'title': tugua_title,
                 'url': article_link,
                 'content': no_referer_content,
@@ -52,7 +52,7 @@ class TuguaSpider(BaseSpider):
                 'default_category_id': self.default_category_id,
                 'default_tag_id': self.default_tag_id,
                 'hash': self.gen_hash(clean_content.encode(errors='ignore'))
-            }
+            })
 
     async def parse_link(self, init_url: str, session, max_count: int) -> list:
         """
@@ -75,9 +75,7 @@ class TuguaSpider(BaseSpider):
         async with aiohttp.ClientSession() as session:
             article_links = await self.parse_link(self.init_url, session, max_count=10)
             tasks = [self.parse_article(link, session) for link in article_links]
-            for coro in asyncio.as_completed(tasks):
-                data = await coro
-                await self.save(data=data)
+            await asyncio.gather(*tasks)
 
             # 爬取结束，更新resource中的last_refresh_time
             await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)

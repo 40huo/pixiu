@@ -75,7 +75,7 @@ def spider_listener(event):
 
             req = send_req(
                 method='patch',
-                url=reverse(viewname='spider-event-detail', args=[resource_id]),
+                url=reverse(viewname='resource-detail', args=[resource_id]),
                 data={
                     'last_refresh_time': datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S'),
                     'refresh_status': enums.ResourceRefreshStatus.FAIL.value
