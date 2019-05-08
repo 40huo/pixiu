@@ -1,3 +1,5 @@
+from urllib.parse import urljoin
+
 from rest_framework.test import RequestsClient
 
 from pixiu.settings import TOKEN
@@ -25,10 +27,8 @@ def send_req(method: str, url: str, data: dict = None, headers: dict = None):
     if url.startswith('http'):
         logger.error(f'需要使用相对URL')
         return None
-    elif url.startswith('/'):
-        abs_url = f'{base_url}{url[1:]}'
     else:
-        abs_url = f'{base_url}{url}'
+        abs_url = urljoin(base=base_url, url=url)
 
     if not abs_url.endswith('/'):
         abs_url += '/'

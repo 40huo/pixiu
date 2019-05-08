@@ -64,10 +64,15 @@ class TuguaSpider(BaseSpider):
         """
         init_html = await self.get_html(init_url, session)
         if init_html:
-            soup = BeautifulSoup(init_html, 'lxml')
-            node_list = soup.select('ul > li')
-            relative_links = [node.find('a').get('href') for node in node_list[:max_count]]
-            detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
+            soup = BeautifulSoup(init_html, 'html5lib')
+            title_list = soup.find_all('div', class_='title')
+            detail_links = []
+            for title in title_list:
+                if title.find('a', text='喷嚏图卦'):
+                    node_list = title.find_next('div', class_='title_down').find('ul').find_all('li')
+                    relative_links = [node.find('a').get('href') for node in node_list[:max_count]]
+                    detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
+
             return detail_links
 
     async def run(self):
