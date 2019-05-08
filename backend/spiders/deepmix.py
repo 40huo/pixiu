@@ -75,6 +75,8 @@ class DeepMixSpider(BaseSpider):
         pre_login_re = re.compile(r'url=(/\S+)\">')
         autim_re = re.compile(r'id=\"autim\" value=\"(\d+)\"')
         sid_re = re.compile(r'name=\"sid\" value=\"(\w+)\"')
+        form_token_re = re.compile(r'name=\"form_token\" value=\"(\w+)\"')
+        creation_time_re = re.compile(r'name=\"creation_time\" value=\"(\w+)\"')
 
         if self.refresh_time > self.REFRESH_LIMIT:
             logger.warning(f'达到刷新次数上线 {self.REFRESH_LIMIT}')
@@ -100,10 +102,14 @@ class DeepMixSpider(BaseSpider):
             pre_login_url = f'{self.deepmix_index_url}{pre_login_re.search(raw_html).group(1)}'
             logger.info(f'请求登录跳转页 {pre_login_url}')
             return self._fetch_html(url=pre_login_url, method='get')
-        elif sid_re.search(raw_html):
+        elif sid_re.search(raw_html) and creation_time_re.search(raw_html) and form_token_re.search(raw_html):
             sid = sid_re.search(raw_html).group(1)
             autim = autim_re.search(raw_html).group(1)
+            creation_time = creation_time_re.search(raw_html).group(1)
+            form_token = form_token_re.search(raw_html).group(1)
             post_data = {
+                'creation_time': creation_time,
+                'form_token': form_token,
                 'sid': sid,
                 'redirect': 'index.php',
                 'login': '登录',
@@ -114,8 +120,12 @@ class DeepMixSpider(BaseSpider):
             login_url = f'{self.deepmix_index_url}/ucp.php?mode=login'
             logger.info(f'发送登录请求 {login_url}')
             return self._fetch_html(url=login_url, method='post', post_data=post_data)
+        elif '提交的表单无效' in raw_html:
+            logger.error('登录请求无效，需要更新爬虫！')
+            return False
         else:
             logger.error(f'Session验证失败，未知HTML内容 {raw_html}')
+            return False
 
     def parse_topic(self, topic_url) -> tuple:
         """
