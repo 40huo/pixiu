@@ -61,7 +61,7 @@ class TuguaSpider(BaseSpider):
                 source=self.resource_id,
                 category=self.default_category_id,
                 tag=self.default_tag_id,
-                hash=self.gen_hash(clean_content.encode(errors='ignore'))
+                hash=self.gen_hash(clean_content)
             )
 
             await self.save(new_post)
