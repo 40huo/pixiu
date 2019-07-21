@@ -5,7 +5,7 @@ import urllib.parse
 import aiohttp
 from bs4 import BeautifulSoup
 
-from backend.pipelines.save import html_clean, change_referer_policy
+from backend.pipelines.save import Post, html_clean, change_referer_policy
 from backend.spiders.base import BaseSpider
 from utils import enums
 from utils.log import Logger
@@ -22,7 +22,17 @@ class TuguaSpider(BaseSpider):
     喷嚏图卦
     """
 
-    def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
+    def __init__(
+            self,
+            loop,
+            init_url: str,
+            resource_id: int = None,
+            default_category_id: int = None,
+            default_tag_id: int = None,
+            headers: str = None,
+            *args,
+            **kwargs
+    ):
         super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
 
     async def parse_article(self, article_link: str, session):
@@ -32,7 +42,7 @@ class TuguaSpider(BaseSpider):
         :param session: aiohttp Session
         :return:
         """
-        article_html = await self.get_html(article_link, session)
+        article_html = await self.fetch_html(article_link, session)
         if article_html:
             soup = BeautifulSoup(article_html, 'lxml')
 
@@ -43,16 +53,18 @@ class TuguaSpider(BaseSpider):
             publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
             clean_content = html_clean(origin_content)
 
-            await self.save({
-                'title': tugua_title,
-                'url': article_link,
-                'content': no_referer_content,
-                'publish_time': publish_time,
-                'resource_id': self.resource_id,
-                'default_category_id': self.default_category_id,
-                'default_tag_id': self.default_tag_id,
-                'hash': self.gen_hash(clean_content.encode(errors='ignore'))
-            })
+            new_post = Post(
+                title=tugua_title,
+                url=article_link,
+                content=no_referer_content,
+                pub_time=publish_time,
+                source=self.resource_id,
+                category=self.default_category_id,
+                tag=self.default_tag_id,
+                hash=self.gen_hash(clean_content.encode(errors='ignore'))
+            )
+
+            await self.save(new_post)
 
     async def parse_link(self, init_url: str, session, max_count: int) -> list:
         """
@@ -62,7 +74,7 @@ class TuguaSpider(BaseSpider):
         :param max_count: 解析数量
         :return:
         """
-        init_html = await self.get_html(init_url, session)
+        init_html = await self.fetch_html(init_url, session)
         if init_html:
             soup = BeautifulSoup(init_html, 'html5lib')
             title_list = soup.find_all('div', class_='title')

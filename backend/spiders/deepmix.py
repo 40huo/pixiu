@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import re
 
@@ -26,7 +27,17 @@ class DeepMixSpider(BaseSpider):
     deepmix_index_url = ''
     REFRESH_LIMIT = 30
 
-    def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
+    def __init__(
+            self,
+            loop,
+            init_url: str,
+            resource_id: int = None,
+            default_category_id: int = None,
+            default_tag_id: int = None,
+            headers: str = None,
+            *args,
+            **kwargs
+    ):
         super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
 
         proxy = kwargs.pop('proxy', None)
@@ -52,9 +63,9 @@ class DeepMixSpider(BaseSpider):
         self.session.mount('http://', HTTPAdapter(max_retries=3))
         self.session.mount('https://', HTTPAdapter(max_retries=3))
 
-        self.refresh_time = 0
+        self.__refresh_time = 0
 
-    def _fetch_html(self, url, method: str = 'get', post_data: dict = None):
+    def __fetch_html(self, url, method: str = 'get', post_data: dict = None):
         if method == 'get':
             req = self.session.get(url)
         elif method == 'post':
@@ -63,50 +74,60 @@ class DeepMixSpider(BaseSpider):
             logger.warning(f'不支持的请求方法 {method}')
             return None
 
-        return self._verify_session(raw_html=req.text)
+        return self.__verify_session(raw_html=req.text)
 
-    def _verify_session(self, raw_html: str) -> bool:
+    def __verify_session(self, raw_html: str) -> bool:
         """
         刷新session
         :return:
         """
-        init_re = re.compile(r'缓存已经过期或点击太快')
-        index_re = re.compile(r'url=(http://deepmix\w+\.onion)\">')
-        pre_login_re = re.compile(r'url=(/\S+)\">')
-        autim_re = re.compile(r'id=\"autim\" value=\"(\d+)\"')
-        sid_re = re.compile(r'name=\"sid\" value=\"(\w+)\"')
-        form_token_re = re.compile(r'name=\"form_token\" value=\"(\w+)\"')
-        creation_time_re = re.compile(r'name=\"creation_time\" value=\"(\w+)\"')
+        cache_expired_pattern = re.compile(r'缓存已经过期或点击太快')
+        index_pattern = re.compile(r'url=(http://deepmix\w+\.onion)\">')
+        pre_login_pattern = re.compile(r'url=(/\S+)\">')
+        autim_pattern = re.compile(r'id=\"autim\" value=\"(\d+)\"')
+        sid_pattern = re.compile(r'name=\"sid\" value=\"(\w+)\"')
+        form_token_pattern = re.compile(r'name=\"form_token\" value=\"(\w+)\"')
+        creation_time_pattern = re.compile(r'name=\"creation_time\" value=\"(\w+)\"')
 
-        if self.refresh_time > self.REFRESH_LIMIT:
+        if self.__refresh_time > self.REFRESH_LIMIT:
             logger.warning(f'达到刷新次数上线 {self.REFRESH_LIMIT}')
             return False
         else:
-            self.refresh_time += 1
+            self.__refresh_time += 1
 
-        if self.username in raw_html:
-            logger.info('Session验证成功')
-            self.refresh_time = 0
-            return True
-        elif init_re.search(raw_html) or raw_html == '':
+        if not raw_html:
             # 第一次
             logger.info(f'请求初始页面 {self.init_url}')
-            return self._fetch_html(url=self.init_url, method='get')
-        elif index_re.search(raw_html):
+            return self.__fetch_html(url=self.init_url, method='get')
+
+        elif self.username in raw_html and '暗网欢迎您' in raw_html:
+            logger.info('Session验证成功')
+            return True
+
+        elif cache_expired_pattern.search(raw_html):
+            # 缓存过期
+            logger.info(f'缓存过期，再次请求首页 {self.deepmix_index_url}')
+            return self.__fetch_html(url=self.deepmix_index_url, method='get')
+
+        elif index_pattern.search(raw_html):
             # 获取到首页入口
-            index_url = index_re.search(raw_html).group(1)
+            index_url = index_pattern.search(raw_html).group(1)
             self.deepmix_index_url = index_url
             logger.info(f'请求首页 {index_url}')
-            return self._fetch_html(url=index_url, method='get')
-        elif pre_login_re.search(raw_html):
-            pre_login_url = f'{self.deepmix_index_url}{pre_login_re.search(raw_html).group(1)}'
+            return self.__fetch_html(url=index_url, method='get')
+
+        elif pre_login_pattern.search(raw_html):
+            pre_login_url = f'{self.deepmix_index_url}{pre_login_pattern.search(raw_html).group(1)}'
             logger.info(f'请求登录跳转页 {pre_login_url}')
-            return self._fetch_html(url=pre_login_url, method='get')
-        elif sid_re.search(raw_html) and creation_time_re.search(raw_html) and form_token_re.search(raw_html):
-            sid = sid_re.search(raw_html).group(1)
-            autim = autim_re.search(raw_html).group(1)
-            creation_time = creation_time_re.search(raw_html).group(1)
-            form_token = form_token_re.search(raw_html).group(1)
+            return self.__fetch_html(url=pre_login_url, method='get')
+
+        elif (sid_pattern.search(raw_html)
+              and creation_time_pattern.search(raw_html)
+              and form_token_pattern.search(raw_html)):
+            sid = sid_pattern.search(raw_html).group(1)
+            autim = autim_pattern.search(raw_html).group(1)
+            creation_time = creation_time_pattern.search(raw_html).group(1)
+            form_token = form_token_pattern.search(raw_html).group(1)
             post_data = {
                 'creation_time': creation_time,
                 'form_token': form_token,
@@ -119,10 +140,12 @@ class DeepMixSpider(BaseSpider):
             }
             login_url = f'{self.deepmix_index_url}/ucp.php?mode=login'
             logger.info(f'发送登录请求 {login_url}')
-            return self._fetch_html(url=login_url, method='post', post_data=post_data)
+            return self.__fetch_html(url=login_url, method='post', post_data=post_data)
+
         elif '提交的表单无效' in raw_html:
-            logger.error('登录请求无效，需要更新爬虫！')
+            logger.error(f'登录请求无效，需要更新爬虫 {raw_html}')
             return False
+
         else:
             logger.error(f'Session验证失败，未知HTML内容 {raw_html}')
             return False
@@ -135,18 +158,25 @@ class DeepMixSpider(BaseSpider):
         """
         try:
             req = self.session.get(topic_url)
+            req.encoding = None
+            soup = BeautifulSoup(req.text, 'lxml')
+
             if self.username not in req.text:
-                logger.warning(f'页面内容异常，可能返回了节点选择页面')
-                is_session_success = self._verify_session(req.text)
+                title = soup.find('title').get_text()
+                logger.warning(f'页面内容异常，标题【{title}】')
+                is_session_success = self.__verify_session(req.text)
                 if is_session_success:
                     return self.parse_topic(topic_url)
                 else:
                     return None, None
 
-            soup = BeautifulSoup(req.text, 'lxml')
-            pub_time = datetime.datetime.strptime(soup.find('p', class_='author').contents[-1].strip(), "%Y年-%m月-%d日 %H:%M")
+            pub_time = datetime.datetime.strptime(
+                soup.find('p', class_='author').contents[-1].strip(),
+                "%Y年-%m月-%d日 %H:%M"
+            )
             content = save.html_clean(str(soup.find('div', class_='content')))
 
+            self.__refresh_time = 0
             return pub_time, content
         except Exception as e:
             logger.error(f'获取帖子 {topic_url} 详情异常 {e}', exc_info=True)
@@ -164,7 +194,7 @@ class DeepMixSpider(BaseSpider):
         req = self.session.get(list_url)
         if self.username not in req.text:
             logger.warning(f'页面内容异常，可能返回了节点选择页面')
-            is_session_success = self._verify_session(req.text)
+            is_session_success = self.__verify_session(req.text)
             if is_session_success:
                 return self.parse_list(path)
             else:
@@ -180,29 +210,29 @@ class DeepMixSpider(BaseSpider):
 
                 pub_time, content = self.parse_topic(topic_url=topic_url)
                 if pub_time and content:
-                    result_list.append({
-                        'title': title,
-                        'url': topic_url,
-                        'content': content,
-                        'publish_time': pub_time,
-                        'resource_id': self.resource_id,
-                        'default_category_id': self.default_category_id,
-                        'default_tag_id': self.default_tag_id,
-                        'hash': self.gen_hash(a_tag.get('href').encode(errors='ignore'))
-                    })
+                    new_post = save.Post(
+                        title=title,
+                        url=topic_url,
+                        content=content,
+                        pub_time=pub_time,
+                        source=self.resource_id,
+                        category=self.default_category_id,
+                        tag=self.default_tag_id,
+                        hash=self.gen_hash(a_tag.get('href'))
+                    )
+                    result_list.append(new_post)
+                    asyncio.ensure_future(self.save(data=new_post), loop=self.loop)
 
         return result_list
 
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
-        is_session_success = await self.loop.run_in_executor(executor, self._verify_session, '')
+        is_session_success = await self.loop.run_in_executor(executor, self.__verify_session, '')
         if is_session_success:
             for zone in ('pay/user_area.php?q_ea_id=10001',):
                 data_list = await self.loop.run_in_executor(executor, self.parse_list, zone)
                 if len(data_list):
-                    logger.info(f'抓取到 {len(data_list)} 条暗网数据')
-                    for data in data_list:
-                        await self.save(data=data)
+                    logger.info(f'运行结束，抓取到 {len(data_list)} 条暗网数据')
 
                     # 爬取结束，更新resource中的last_refresh_time
                     await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)

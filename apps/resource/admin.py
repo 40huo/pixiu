@@ -6,14 +6,14 @@ from .models import Authorization, ResourceCategory, Resource
 # Register your models here.
 @admin.register(Authorization)
 class AuthorizationAdmin(admin.ModelAdmin):
-    list_display = [field.name for field in Authorization._meta.fields]
+    list_display = [field.name for field in Authorization._meta.fields if field.name != "id"]
 
 
 @admin.register(ResourceCategory)
 class ResourceCategoryAdmin(admin.ModelAdmin):
-    list_display = [field.name for field in ResourceCategory._meta.fields]
+    list_display = [field.name for field in ResourceCategory._meta.fields if field.name != "id"]
 
 
 @admin.register(Resource)
 class SourceAdmin(admin.ModelAdmin):
-    list_display = [field.name for field in Resource._meta.fields]
+    list_display = [field.name for field in Resource._meta.fields if field.name != "id"]

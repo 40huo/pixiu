@@ -14,7 +14,17 @@ logger = Logger(__name__).get_logger()
 
 class BaseSpider(object):
 
-    def __init__(self, loop, init_url: str, resource_id: int = None, default_category_id: int = None, default_tag_id: int = None, headers: str = None, *args, **kwargs):
+    def __init__(
+            self,
+            loop,
+            init_url: str,
+            resource_id: int = None,
+            default_category_id: int = None,
+            default_tag_id: int = None,
+            headers: str = None,
+            *args,
+            **kwargs
+    ):
         self.loop = loop
         self.init_url = init_url
         self.resource_id = resource_id
@@ -22,10 +32,11 @@ class BaseSpider(object):
         self.default_tag_id = default_tag_id
 
         self.headers = headers if headers else {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36'
+            'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                           'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36')
         }
 
-    async def get_html(self, url: str, session, method: str = 'GET', post_data: str = None, encoding: str = None):
+    async def fetch_html(self, url: str, session, method: str = 'GET', post_data: str = None, encoding: str = None):
         """
         获取HTML内容
         :param url: 链接
@@ -53,13 +64,13 @@ class BaseSpider(object):
             return None
 
     @staticmethod
-    def gen_hash(content: bytes) -> str:
+    def gen_hash(content: str) -> str:
         """
         计算Hash值
         :param content:
         :return:
         """
-        return hashlib.sha1(content).hexdigest()
+        return hashlib.sha1(content.encode(encoding='utf-8', errors='ignore')).hexdigest()
 
     @staticmethod
     async def save(data):
