@@ -13,17 +13,16 @@ logger = Logger(__name__).get_logger()
 
 
 class BaseSpider(object):
-
     def __init__(
-            self,
-            loop,
-            init_url: str,
-            resource_id: int = None,
-            default_category_id: int = None,
-            default_tag_id: int = None,
-            headers: str = None,
-            *args,
-            **kwargs
+        self,
+        loop,
+        init_url: str,
+        resource_id: int = None,
+        default_category_id: int = None,
+        default_tag_id: int = None,
+        headers: str = None,
+        *args,
+        **kwargs,
     ):
         self.loop = loop
         self.init_url = init_url
@@ -31,12 +30,21 @@ class BaseSpider(object):
         self.default_category_id = default_category_id
         self.default_tag_id = default_tag_id
 
-        self.headers = headers if headers else {
-            'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
-                           'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36')
+        self.headers = headers or {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/70.0.3538.67 Safari/537.36"
+            )
         }
 
-    async def fetch_html(self, url: str, session, method: str = 'GET', post_data: str = None, encoding: str = None):
+    async def fetch_html(
+        self,
+        url: str,
+        session,
+        method: str = "GET",
+        post_data: str = None,
+        encoding: str = None,
+    ):
         """
         获取HTML内容
         :param url: 链接
@@ -47,20 +55,22 @@ class BaseSpider(object):
         :return: 请求返回内容
         """
         try:
-            if method == 'GET':
+            if method.upper() == "GET":
                 async with session.get(url=url, headers=self.headers) as resp:
-                    return await resp.text(encoding=encoding, errors='ignore')
-            elif method == 'POST' and post_data is not None:
-                async with session.post(url=url, headers=self.headers, data=post_data) as resp:
-                    return await resp.text(encoding=encoding, errors='ignore')
+                    return await resp.text(encoding=encoding, errors="ignore")
+            elif method.upper() == "POST" and post_data is not None:
+                async with session.post(
+                    url=url, headers=self.headers, data=post_data
+                ) as resp:
+                    return await resp.text(encoding=encoding, errors="ignore")
             else:
-                logger.warning(f'Unsupported HTTP method: {method}')
+                logger.warning(f"Unsupported HTTP method: {method}")
                 return None
         except UnicodeDecodeError:
-            logger.error(f'Decode error: {url}')
+            logger.error(f"Decode error: {url}")
             return None
         except Exception as e:
-            logger.error(f'未知错误 {e}', exc_info=True)
+            logger.error(f"未知错误 {e}", exc_info=True)
             return None
 
     @staticmethod
@@ -70,7 +80,9 @@ class BaseSpider(object):
         :param content:
         :return:
         """
-        return hashlib.sha1(content.encode(encoding='utf-8', errors='ignore')).hexdigest()
+        return hashlib.sha1(
+            content.encode(encoding="utf-8", errors="ignore")
+        ).hexdigest()
 
     @staticmethod
     async def save(data):
@@ -81,30 +93,34 @@ class BaseSpider(object):
         """
         await save.produce(save.save_queue, data=data)
 
-    async def update_resource(self, status: int = enums.ResourceRefreshStatus.SUCCESS.value):
-        patch_data = {
-            'refresh_status': status
-        }
+    async def update_resource(
+        self, status: int = enums.ResourceRefreshStatus.SUCCESS.value
+    ):
+        patch_data = {"refresh_status": status}
 
         # 正在刷新时不更新刷新时间
         if status != enums.ResourceRefreshStatus.RUNNING.value:
-            patch_data['last_refresh_time'] = datetime.datetime.strftime(datetime.datetime.now(), '%Y-%m-%dT%H:%M:%S')
+            patch_data["last_refresh_time"] = datetime.datetime.strftime(
+                datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S"
+            )
 
         req = await self.loop.run_in_executor(
             executor,
             send_req,
-            'patch',
-            reverse(viewname='resource-detail', args=[self.resource_id]),
+            "patch",
+            reverse(viewname="resource-detail", args=[self.resource_id]),
             patch_data,
         )
         if req.status_code == 200:
-            logger.info(f'更新 id={self.resource_id} 订阅源刷新时间与状态成功')
+            logger.info(f"更新 id={self.resource_id} 订阅源刷新时间与状态成功")
         else:
-            logger.error(f'更新 id={self.resource_id} 订阅源刷新时间与状态失败，状态码 {req.status_code}，响应 {req.text}')
+            logger.error(
+                f"更新 id={self.resource_id} 订阅源刷新时间与状态失败，状态码 {req.status_code}，响应 {req.text}"
+            )
 
     async def run(self):
         """
         爬虫入口
         :return:
         """
-        raise NotImplementedError('Spider must override this method!')
+        raise NotImplementedError("Spider must override this method!")

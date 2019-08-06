@@ -23,17 +23,26 @@ class TuguaSpider(BaseSpider):
     """
 
     def __init__(
-            self,
+        self,
+        loop,
+        init_url: str,
+        resource_id: int = None,
+        default_category_id: int = None,
+        default_tag_id: int = None,
+        headers: str = None,
+        *args,
+        **kwargs
+    ):
+        super().__init__(
             loop,
-            init_url: str,
-            resource_id: int = None,
-            default_category_id: int = None,
-            default_tag_id: int = None,
-            headers: str = None,
+            init_url,
+            resource_id,
+            default_category_id,
+            default_tag_id,
+            headers,
             *args,
             **kwargs
-    ):
-        super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
+        )
 
     async def parse_article(self, article_link: str, session):
         """
@@ -44,13 +53,21 @@ class TuguaSpider(BaseSpider):
         """
         article_html = await self.fetch_html(article_link, session)
         if article_html:
-            soup = BeautifulSoup(article_html, 'lxml')
+            soup = BeautifulSoup(article_html, "lxml")
 
-            tugua_title = soup.find('td', class_='oblog_t_4').find_all('a')[1].get_text()
-            origin_content = str(soup.find('div', class_='oblog_text'))
-            no_referer_content = str(change_referer_policy(soup.find('div', class_='oblog_text'), tag_name='img'))
-            publish_time = soup.select('span.oblog_text')[0].get_text()
-            publish_time = datetime.datetime.strptime(publish_time.replace('xilei 发布于 ', ''), '%Y-%m-%d %H:%M:%S')
+            tugua_title = (
+                soup.find("td", class_="oblog_t_4").find_all("a")[1].get_text()
+            )
+            origin_content = str(soup.find("div", class_="oblog_text"))
+            no_referer_content = str(
+                change_referer_policy(
+                    soup.find("div", class_="oblog_text"), tag_name="img"
+                )
+            )
+            publish_time = soup.select("span.oblog_text")[0].get_text()
+            publish_time = datetime.datetime.strptime(
+                publish_time.replace("xilei 发布于 ", ""), "%Y-%m-%d %H:%M:%S"
+            )
             clean_content = html_clean(origin_content)
 
             new_post = Post(
@@ -61,7 +78,7 @@ class TuguaSpider(BaseSpider):
                 source=self.resource_id,
                 category=self.default_category_id,
                 tag=self.default_tag_id,
-                hash=self.gen_hash(clean_content)
+                hash=self.gen_hash(clean_content),
             )
 
             await self.save(new_post)
@@ -76,14 +93,23 @@ class TuguaSpider(BaseSpider):
         """
         init_html = await self.fetch_html(init_url, session)
         if init_html:
-            soup = BeautifulSoup(init_html, 'html5lib')
-            title_list = soup.find_all('div', class_='title')
+            soup = BeautifulSoup(init_html, "html5lib")
+            title_list = soup.find_all("div", class_="title")
             detail_links = []
             for title in title_list:
-                if title.find('a', text='喷嚏图卦'):
-                    node_list = title.find_next('div', class_='title_down').find('ul').find_all('li')
-                    relative_links = [node.find('a').get('href') for node in node_list[:max_count]]
-                    detail_links = [urllib.parse.urljoin(base=init_url, url=link) for link in relative_links]
+                if title.find("a", text="喷嚏图卦"):
+                    node_list = (
+                        title.find_next("div", class_="title_down")
+                        .find("ul")
+                        .find_all("li")
+                    )
+                    relative_links = [
+                        node.find("a").get("href") for node in node_list[:max_count]
+                    ]
+                    detail_links = [
+                        urllib.parse.urljoin(base=init_url, url=link)
+                        for link in relative_links
+                    ]
 
             return detail_links
 
