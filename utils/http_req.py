@@ -7,7 +7,7 @@ from utils.log import Logger
 
 client = RequestsClient()
 logger = Logger(__name__).get_logger()
-base_url = 'http://testserver/'
+base_url = "http://testserver/"
 
 
 def send_req(method: str, url: str, data: dict = None, headers: dict = None):
@@ -20,25 +20,25 @@ def send_req(method: str, url: str, data: dict = None, headers: dict = None):
     :return:
     """
     if headers is None:
-        headers = {'Authorization': f'Token {TOKEN}'}
+        headers = {"Authorization": f"Token {TOKEN}"}
     else:
         headers = headers
 
-    if url.startswith('http'):
-        logger.error(f'需要使用相对URL')
+    if url.startswith("http"):
+        logger.error(f"需要使用相对URL")
         return None
     else:
         abs_url = urljoin(base=base_url, url=url)
 
-    if not abs_url.endswith('/'):
-        abs_url += '/'
+    if not abs_url.endswith("/"):
+        abs_url += "/"
 
-    if method.lower() == 'get':
+    if method.lower() == "get":
         return client.get(url=abs_url, headers=headers)
-    elif method.lower() == 'post':
+    elif method.lower() == "post":
         return client.post(url=abs_url, json=data, headers=headers)
-    elif method.lower() == 'patch':
+    elif method.lower() == "patch":
         return client.patch(url=abs_url, json=data, headers=headers)
     else:
-        logger.error(f'不受支持的请求方法 {method}')
+        logger.error(f"不受支持的请求方法 {method}")
         return None

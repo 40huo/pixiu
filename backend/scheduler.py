@@ -27,6 +27,19 @@ spider_id_pattern = re.compile(r"\((\d+),(\d+)\)$")
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 
 
+async def fetch_resource_list(loop):
+    req = await loop.run_in_executor(
+        executor, send_req, "get", reverse(viewname="resource-list")
+    )
+    if req.status_code == 200:
+        logger.debug("请求/api/resource/成功")
+        return req
+    else:
+        msg = f"resource API请求失败 {req.json()}"
+        logger.error(msg)
+        raise Exception(msg)
+
+
 def spider_listener(event):
     """
     apscheduler事件回调
@@ -83,23 +96,14 @@ def spider_listener(event):
         logger.error(f"处理任务异常时出错 {e}", exc_info=True)
 
 
-async def refresh_task(loop, scheduler):
+async def refresh_task(loop, scheduler: AsyncIOScheduler):
     """
     任务获取
     :param loop: 协程loop
     :param scheduler: apscheduler
     :return:
     """
-    req = await loop.run_in_executor(
-        executor, send_req, "get", reverse(viewname="resource-list")
-    )
-    if req.status_code == 200:
-        logger.debug("请求/api/resource/成功")
-    else:
-        msg = f"resource API请求失败 {req.json()}"
-        logger.error(msg)
-        raise Exception(msg)
-
+    req = await fetch_resource_list(loop=loop)
     result = req.json()
     for resource in result:
         is_enabled = resource.get("is_enabled")
@@ -172,6 +176,35 @@ async def refresh_task(loop, scheduler):
             )
 
 
+async def init_task(loop):
+    """
+    初始化，将running状态重置
+    :param loop: 协程loop
+    :return:
+    """
+    req = await fetch_resource_list(loop=loop)
+    result = req.json()
+    for resource in result:
+        status = resource.get("refresh_status")
+        resource_id = resource.get("id")
+        resource_name = resource.get("name")
+        if status == enums.ResourceRefreshStatus.RUNNING.value:
+            patch_data = {"refresh_status": enums.ResourceRefreshStatus.FAIL.value}
+            req = await loop.run_in_executor(
+                executor,
+                send_req,
+                "patch",
+                reverse(viewname="resource-detail", args=[resource_id]),
+                patch_data,
+            )
+            if req.status_code == 200:
+                logger.info(f"重置 {resource_name} 订阅源状态成功")
+            else:
+                logger.error(
+                    f"重置 {resource_name} 订阅源状态失败，状态码 {req.status_code}，响应 {req.text}"
+                )
+
+
 def run():
     """
     后端爬虫入口
@@ -184,6 +217,8 @@ def run():
         spider_listener,
         mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED,
     )
+
+    asyncio.ensure_future(init_task(loop=loop))
 
     scheduler.add_job(
         func=refresh_task,
