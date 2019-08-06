@@ -83,7 +83,16 @@ class DeepMixSpider(BaseSpider):
 
         self.__refresh_time = 0
 
+    def __insecure_cookies(self):
+        """
+        secure的cookie不会跟随http请求发送，导致登录失败
+        :return:
+        """
+        for c in self.session.cookies:
+            c.secure = False
+
     def __fetch_html(self, url, method: str = "GET", post_data: dict = None):
+        self.__insecure_cookies()
         if method.upper() == "GET":
             req = self.session.get(url)
         elif method.upper() == "POST":
