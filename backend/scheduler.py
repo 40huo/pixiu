@@ -13,14 +13,14 @@ from apscheduler.events import (
 )
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
+from loguru import logger
 from rest_framework.reverse import reverse
 
 from backend.pipelines import save
 from utils import enums
 from utils.http_req import send_req
-from utils.log import Logger
+from utils.log import init_log
 
-logger = Logger(__name__).get_logger()
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("django.request").setLevel(logging.ERROR)
 spider_id_pattern = re.compile(r"\((\d+),(\d+)\)$")
@@ -32,7 +32,7 @@ async def fetch_resource_list(loop):
         executor, send_req, "get", reverse(viewname="resource-list")
     )
     if req.status_code == 200:
-        logger.debug("请求/api/resource/成功")
+        logger.trace("请求/api/resource/成功")
         return req
     else:
         msg = f"resource API请求失败 {req.json()}"
@@ -93,7 +93,7 @@ def spider_listener(event):
         else:
             logger.error(f"任务id中不存在爬虫id {event}")
     except Exception as e:
-        logger.error(f"处理任务异常时出错 {e}", exc_info=True)
+        logger.opt(exception=True).error(f"处理任务异常时出错 {e}")
 
 
 async def refresh_task(loop, scheduler: AsyncIOScheduler):
@@ -210,6 +210,7 @@ def run():
     后端爬虫入口
     :return:
     """
+    init_log()
     loop = asyncio.get_event_loop()
     scheduler = AsyncIOScheduler()
 
@@ -218,7 +219,7 @@ def run():
         mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED,
     )
 
-    asyncio.ensure_future(init_task(loop=loop))
+    asyncio.ensure_future(init_task(loop=loop), loop=loop)
 
     scheduler.add_job(
         func=refresh_task,
@@ -232,7 +233,7 @@ def run():
     )
     scheduler.start()
 
-    asyncio.ensure_future(save.consume(loop, save.save_queue))
+    asyncio.ensure_future(save.consume(loop, save.save_queue), loop=loop)
 
     try:
         loop.run_forever()

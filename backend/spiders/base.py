@@ -1,15 +1,13 @@
 import datetime
 import hashlib
 
+from loguru import logger
 from rest_framework.reverse import reverse
 
 from backend.pipelines import save
 from backend.scheduler import executor
 from utils import enums
 from utils.http_req import send_req
-from utils.log import Logger
-
-logger = Logger(__name__).get_logger()
 
 
 class BaseSpider(object):
@@ -70,7 +68,7 @@ class BaseSpider(object):
             logger.error(f"Decode error: {url}")
             return None
         except Exception as e:
-            logger.error(f"未知错误 {e}", exc_info=True)
+            logger.opt(exception=True).error(f"未知错误 {e}")
             return None
 
     @staticmethod

@@ -4,15 +4,13 @@ import re
 
 import requests
 from bs4 import BeautifulSoup
+from loguru import logger
 from requests.adapters import HTTPAdapter
 
 from backend.pipelines import save
 from backend.spiders.base import BaseSpider
 from utils import enums
-from utils.log import Logger
 from ..scheduler import executor
-
-logger = Logger(__name__).get_logger()
 
 
 def get_spider(*args, **kwargs):
@@ -215,7 +213,7 @@ class DeepMixSpider(BaseSpider):
             self.__refresh_time = 0
             return pub_time, content
         except Exception as e:
-            logger.error(f"获取帖子 {topic_url} 详情异常 {e}", exc_info=True)
+            logger.opt(exception=True).error(f"获取帖子 {topic_url} 详情异常 {e}")
             return None, None
 
     def parse_list(self, path) -> list:

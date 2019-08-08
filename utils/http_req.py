@@ -1,12 +1,11 @@
 from urllib.parse import urljoin
 
+from loguru import logger
 from rest_framework.test import RequestsClient
 
 from pixiu.settings import TOKEN
-from utils.log import Logger
 
 client = RequestsClient()
-logger = Logger(__name__).get_logger()
 base_url = "http://testserver/"
 
 

@@ -1,14 +1,13 @@
 import asyncio
 import datetime
 
+from loguru import logger
 from lxml.html.clean import Cleaner
 from rest_framework.reverse import reverse
 
 from utils.http_req import send_req
-from utils.log import Logger
 
 save_queue = asyncio.Queue(maxsize=1024)
-logger = Logger(__name__).get_logger()
 
 
 class Post(object):
@@ -17,15 +16,15 @@ class Post(object):
     """
 
     def __init__(
-            self,
-            title: str,
-            url: str,
-            content: str,
-            pub_time,
-            source: int,
-            category: int,
-            tag: int,
-            hash: str
+        self,
+        title: str,
+        url: str,
+        content: str,
+        pub_time,
+        source: int,
+        category: int,
+        tag: int,
+        hash: str,
     ):
         self.title = title
         self.url = url
@@ -37,7 +36,9 @@ class Post(object):
         self.hash = hash
 
 
-def change_referer_policy(tag_obj, tag_name: str, referrer_policy: 'str' = 'no-referrer'):
+def change_referer_policy(
+    tag_obj, tag_name: str, referrer_policy: "str" = "no-referrer"
+):
     """
     处理Referrer Policy
     :param tag_obj:
@@ -47,7 +48,7 @@ def change_referer_policy(tag_obj, tag_name: str, referrer_policy: 'str' = 'no-r
     """
     tag_list = tag_obj.find_all(tag_name)
     for tag in tag_list:
-        tag['referrerPolicy'] = referrer_policy
+        tag["referrerPolicy"] = referrer_policy
 
     return tag_obj
 
@@ -63,7 +64,7 @@ def html_clean(html_content):
         comments=True,
         javascript=True,
         page_structure=False,
-        safe_attrs_only=True
+        safe_attrs_only=True,
     )
     return cleaner.clean_html(html=html_content)
 
@@ -91,18 +92,16 @@ async def consume(loop, queue):
         logger.debug(f"读取存储队列 {data.title}")
 
         post_data = data.__dict__
-        post_data['pub_time'] = datetime.datetime.strftime(data.pub_time, '%Y-%m-%dT%H:%M:%S')
+        post_data["pub_time"] = datetime.datetime.strftime(
+            data.pub_time, "%Y-%m-%dT%H:%M:%S"
+        )
 
         req = await loop.run_in_executor(
-            executor,
-            send_req,
-            'post',
-            reverse(viewname='article-list'),
-            post_data
+            executor, send_req, "post", reverse(viewname="article-list"), post_data
         )
         if req.status_code == 201:
             logger.info(f"存储成功 {data.title}")
         elif req.status_code == 400:
             logger.debug(f"重复文章 {data.title}")
         else:
-            logger.error(f'存储失败，状态码 {req.status_code} 响应详情 {req.text}')
+            logger.error(f"存储失败，状态码 {req.status_code} 响应详情 {req.text}")

@@ -8,9 +8,6 @@ from bs4 import BeautifulSoup
 from backend.pipelines.save import Post, html_clean, change_referer_policy
 from backend.spiders.base import BaseSpider
 from utils import enums
-from utils.log import Logger
-
-logger = Logger(__name__).get_logger()
 
 
 def get_spider(*args, **kwargs):
