@@ -8,7 +8,7 @@ from pixiu.settings import core_env
 
 
 def init_log():
-    logging.getLogger('chardet').setLevel(logging.WARNING)
+    logging.getLogger("chardet").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
 
     class InterceptHandler(logging.Handler):
