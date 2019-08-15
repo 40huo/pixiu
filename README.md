@@ -1,11 +1,10 @@
-# 貔貅 Pixiu
-基于Django和Asyncio的RSS阅读器。
+<h1 align="center">Welcome to Pixiu 👋</h1>
 
----
-
-Personal RSS reader based on Django and asyncio.
+> 基于Django和Asyncio的RSS阅读器。  
+> RSS reader based on Django and asyncio.
 
 ## 概览 Overview
+
 - 前端（还没开始写）：[Pixiu-FE](https://github.com/40huo/pixiu-fe.git)
 - 后端：[Pixiu](https://github.com/40huo/pixiu.git)
 
@@ -46,3 +45,14 @@ Web后端启动后只有API功能，爬虫需要启动独立进程，与API交�
 
 - [喷嚏图卦](https://pixiu.40huo.cn/rss/喷嚏图卦/)
 - [暗网交易市场——数据版](https://pixiu.40huo.cn/rss/暗网交易市场/)
+
+## 作者 Author
+
+👤 **40huo**
+
+* Twitter: [@40huo](https://twitter.com/40huo)
+* Github: [@40huo](https://github.com/40huo)
+
+## 支持 Show your support
+
+Give a ⭐️ if this project helped you!
