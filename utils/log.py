@@ -23,7 +23,12 @@ def init_log():
     logger.add(BreadcrumbHandler(), format="{message}", level="ERROR")
 
     if "file" in LOG_TYPE:
-        logger.add("logs/spider.log", rotation="1 day", retention="5 days", enqueue=True)
+        file_fmt = (
+            "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
+            "<level>{level: <8}</level> | "
+            "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        )
+        logger.add("logs/spider.log", rotation="1 day", retention="5 days", enqueue=True, format=file_fmt)
 
     if core_env == "dev":
         logger.remove(0)
