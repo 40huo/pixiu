@@ -21,107 +21,95 @@ BASE_DIR = environ.Path(__file__) - 2
 
 env = environ.Env()
 
-core_env = env.str('PIXIU_ENV', '')
+core_env = env.str("PIXIU_ENV", "")
 if not core_env:
-    if 'darwin' in platform.platform().lower() or 'windows' in platform.platform().lower():
-        core_env = 'dev'
+    if "darwin" in platform.platform().lower() or "windows" in platform.platform().lower():
+        core_env = "dev"
     else:
-        core_env = 'prod'
+        core_env = "prod"
 
 # 指定encoding
-with open(f"{BASE_DIR.path('.envs')}/{core_env}.env", encoding='utf-8') as f:
+with open(f"{BASE_DIR.path('.envs')}/{core_env}.env", encoding="utf-8") as f:
     env.read_env(f)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.11/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env.str('SECRET_KEY')
+SECRET_KEY = env.str("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env.bool('DEBUG', False)
+DEBUG = env.bool("DEBUG", False)
 
-ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=[])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=[])
 
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
-    'rest_framework',
-    'rest_framework.authtoken',
-
-    'apps.article',
-    'apps.spider',
-    'apps.resource',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "rest_framework.authtoken",
+    "apps.article",
+    "apps.spider",
+    "apps.resource",
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'pixiu.urls'
+ROOT_URLCONF = "pixiu.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR.path('templates')],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-            ],
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [BASE_DIR.path("templates")],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ]
         },
-    },
+    }
 ]
 
-WSGI_APPLICATION = 'pixiu.wsgi.application'
+WSGI_APPLICATION = "pixiu.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-DATABASES = {
-    'default': env.db()
-}
+DATABASES = {"default": env.db()}
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
+    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
+    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
+    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
 # Internationalization
 # https://docs.djangoproject.com/en/1.11/topics/i18n/
 
-LANGUAGE_CODE = 'zh-hans'
+LANGUAGE_CODE = "zh-hans"
 
-TIME_ZONE = 'Asia/Shanghai'
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -132,44 +120,36 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
-STATIC_URL = '/static/'
-STATIC_ROOT = env.path('STATIC_ROOT')
-STATICFILES_DIRS = [
-    str(BASE_DIR.path('static'))
-]
+STATIC_URL = "/static/"
+STATIC_ROOT = env.path("STATIC_ROOT")
+STATICFILES_DIRS = [str(BASE_DIR.path("static"))]
 
 # Rest Framework
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.SessionAuthentication',
-    ),
-    'DEFAULT_RENDERER_CLASSES': (
-        'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',
-    ) if DEBUG else (
-        'rest_framework.renderers.JSONRenderer',
+    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",),
+    "DEFAULT_RENDERER_CLASSES": (
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
     )
+    if DEBUG
+    else ("rest_framework.renderers.JSONRenderer",),
 }
 
 # 消息通知
-MAIL_RECIPIENTS = env.list('MAIL_RECIPIENTS')
-MAIL_SENDER = env.str('MAIL_SENDER')
-MAIL_API_KEY = env.str('MAIL_API_KEY')
-MAIL_DOMAIN = env.str('MAIL_DOMAIN')
+MAIL_RECIPIENTS = env.list("MAIL_RECIPIENTS")
+MAIL_SENDER = env.str("MAIL_SENDER")
+MAIL_API_KEY = env.str("MAIL_API_KEY")
+MAIL_DOMAIN = env.str("MAIL_DOMAIN")
 
-SERVERCHAN_KEY = env.str('SERVERCHAN_KEY')
+SERVERCHAN_KEY = env.str("SERVERCHAN_KEY")
 
 # API Token
-TOKEN = env.str('TOKEN')
+TOKEN = env.str("TOKEN")
 
 # 日志
-LOG_TYPE = env.list('LOG_TYPE', default=['console'])
+LOG_TYPE = env.list("LOG_TYPE", default=["console"])
 
 # Sentry
-SENTRY_DSN = env.str('SENTRY_DSN', default='')
+SENTRY_DSN = env.str("SENTRY_DSN", default="")
 if SENTRY_DSN:
-    sentry_sdk.init(
-        dsn=SENTRY_DSN,
-        integrations=[DjangoIntegration()],
-        environment=core_env
-    )
+    sentry_sdk.init(dsn=SENTRY_DSN, integrations=[DjangoIntegration()], environment=core_env)
