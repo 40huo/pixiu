@@ -21,6 +21,7 @@ def init_log():
 
     logger.add(EventHandler(), format="{message}", level="ERROR")
     logger.add(BreadcrumbHandler(), format="{message}", level="ERROR")
+    logger.add("logs/spider.log", rotation="1 day", retention="5 days", enqueue=True)
     if core_env == "dev":
         logger.remove(0)
         logger.add(sys.stderr, level="TRACE")
