@@ -19,6 +19,9 @@ def init_log():
 
     logging.basicConfig(handlers=[InterceptHandler()], level=logging.DEBUG)
 
+    # 取消loguru的自动tty检测，方便supervisor redirect后的色彩输出
+    logger.remove()
+    logger.add(sys.stderr, colorize=True)
     logger.add(EventHandler(), format="{message}", level="ERROR")
     logger.add(BreadcrumbHandler(), format="{message}", level="ERROR")
 
@@ -26,5 +29,5 @@ def init_log():
         logger.add("logs/spider.log", rotation="1 day", retention="5 days", enqueue=True)
 
     if core_env == "dev":
-        logger.remove(0)
+        logger.remove(1)
         logger.add(sys.stderr, level="TRACE")
