@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import re
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -37,23 +38,11 @@ class DeepMixSpider(BaseSpider):
         *args,
         **kwargs,
     ):
-        super().__init__(
-            loop,
-            init_url,
-            resource_id,
-            default_category_id,
-            default_tag_id,
-            headers,
-            *args,
-            **kwargs,
-        )
+        super().__init__(loop, init_url, resource_id, default_category_id, default_tag_id, headers, *args, **kwargs)
 
         proxy = kwargs.pop("proxy", None)
         if proxy is None:
-            self.proxy = {
-                "http": "socks5h://127.0.0.1:9150",
-                "https": "socks5h://127.0.0.1:9150",
-            }
+            self.proxy = {"http": "socks5h://127.0.0.1:9150", "https": "socks5h://127.0.0.1:9150"}
         else:
             self.proxy = {"http": proxy, "https": proxy}
 
@@ -109,8 +98,7 @@ class DeepMixSpider(BaseSpider):
         title_pattern = re.compile(r"<title>(.*?)</title>")
         cache_expired_pattern = re.compile(r"缓存已经过期或点击太快")
         index_pattern = re.compile(r"url=(http://deepmix\w+\.onion)\">")
-        pre_login_pattern = re.compile(r"url=(/\S+)\">")
-        autim_pattern = re.compile(r"id=\"autim\" value=\"(\d+)\"")
+        pre_login_pattern = re.compile(r"<meta http-equiv=\"refresh\"\s+.+content=\".*;ucp\.php\?mode=login\">")
         sid_pattern = re.compile(r"name=\"sid\" value=\"(\w+)\"")
         form_token_pattern = re.compile(r"name=\"form_token\" value=\"(\w+)\"")
         creation_time_pattern = re.compile(r"name=\"creation_time\" value=\"(\w+)\"")
@@ -147,11 +135,19 @@ class DeepMixSpider(BaseSpider):
             return self.__fetch_html(url=index_url, method="get")
 
         elif pre_login_pattern.search(raw_html):
-            pre_login_url = (
-                f"{self.deepmix_index_url}{pre_login_pattern.search(raw_html).group(1)}"
-            )
+            pre_login_url = urljoin(self.deepmix_index_url, "ucp.php?mode=login")
             logger.info(f"请求登录跳转页 {pre_login_url}")
             return self.__fetch_html(url=pre_login_url, method="get")
+
+        elif (
+            not sid_pattern.search(raw_html)
+            and creation_time_pattern.search(raw_html)
+            and form_token_pattern.search(raw_html)
+        ):
+            # 无效的登录页面
+            real_login_url = urljoin(self.deepmix_index_url, "/ucp.php?mode=login")
+            logger.debug(f"出现无效的的登录页面，重新请求 {real_login_url}")
+            return self.__fetch_html(url=real_login_url, method="get")
 
         elif (
             sid_pattern.search(raw_html)
@@ -159,16 +155,14 @@ class DeepMixSpider(BaseSpider):
             and form_token_pattern.search(raw_html)
         ):
             sid = sid_pattern.search(raw_html).group(1)
-            autim = autim_pattern.search(raw_html).group(1)
             creation_time = creation_time_pattern.search(raw_html).group(1)
             form_token = form_token_pattern.search(raw_html).group(1)
             post_data = {
                 "creation_time": creation_time,
                 "form_token": form_token,
                 "sid": sid,
-                "redirect": f"./ucp.php?autim={autim}&mode=login&sid={sid}",
+                "redirect": f"./ucp.php?mode=login&sid={sid}",
                 "login": "登录",
-                "autim": autim,
                 "username": self.username,
                 "password": self.password,
             }
@@ -205,8 +199,7 @@ class DeepMixSpider(BaseSpider):
                     return None, None
 
             pub_time = datetime.datetime.strptime(
-                soup.find("p", class_="author").contents[-1].strip(),
-                "%Y年-%m月-%d日 %H:%M",
+                soup.find("p", class_="author").contents[-1].strip(), "%Y年-%m月-%d日 %H:%M"
             )
             content = save.html_clean(str(soup.find("div", class_="content")))
 
@@ -261,26 +254,18 @@ class DeepMixSpider(BaseSpider):
 
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
-        is_session_success = await self.loop.run_in_executor(
-            executor, self.__verify_session, ""
-        )
+        is_session_success = await self.loop.run_in_executor(executor, self.__verify_session, "")
         if is_session_success:
             for zone in ("pay/user_area.php?q_ea_id=10001",):
-                data_list = await self.loop.run_in_executor(
-                    executor, self.parse_list, zone
-                )
+                data_list = await self.loop.run_in_executor(executor, self.parse_list, zone)
                 if len(data_list):
                     logger.info(f"运行结束，抓取到 {len(data_list)} 条暗网数据")
 
                     # 爬取结束，更新resource中的last_refresh_time
-                    await self.update_resource(
-                        status=enums.ResourceRefreshStatus.SUCCESS.value
-                    )
+                    await self.update_resource(status=enums.ResourceRefreshStatus.SUCCESS.value)
                 else:
                     logger.error(f"抓取帖子异常")
-                    await self.update_resource(
-                        status=enums.ResourceRefreshStatus.FAIL.value
-                    )
+                    await self.update_resource(status=enums.ResourceRefreshStatus.FAIL.value)
         else:
             logger.error("登陆失败，退出")
             await self.update_resource(status=enums.ResourceRefreshStatus.FAIL.value)
