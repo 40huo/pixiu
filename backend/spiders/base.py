@@ -1,13 +1,15 @@
 import datetime
 import hashlib
+import logging
 
-from loguru import logger
 from rest_framework.reverse import reverse
 
 from backend.pipelines import save
 from backend.scheduler import executor
 from utils import enums
 from utils.http_req import send_req
+
+logger = logging.getLogger(__name__)
 
 
 class BaseSpider(object):
@@ -35,14 +37,7 @@ class BaseSpider(object):
             )
         }
 
-    async def fetch_html(
-        self,
-        url: str,
-        session,
-        method: str = "GET",
-        post_data: str = None,
-        encoding: str = None,
-    ):
+    async def fetch_html(self, url: str, session, method: str = "GET", post_data: str = None, encoding: str = None):
         """
         获取HTML内容
         :param url: 链接
@@ -57,9 +52,7 @@ class BaseSpider(object):
                 async with session.get(url=url, headers=self.headers) as resp:
                     return await resp.text(encoding=encoding, errors="ignore")
             elif method.upper() == "POST" and post_data is not None:
-                async with session.post(
-                    url=url, headers=self.headers, data=post_data
-                ) as resp:
+                async with session.post(url=url, headers=self.headers, data=post_data) as resp:
                     return await resp.text(encoding=encoding, errors="ignore")
             else:
                 logger.warning(f"Unsupported HTTP method: {method}")
@@ -68,7 +61,7 @@ class BaseSpider(object):
             logger.error(f"Decode error: {url}")
             return None
         except Exception as e:
-            logger.opt(exception=True).error(f"未知错误 {e}")
+            logger.exception(f"未知错误 {e}")
             return None
 
     @staticmethod
@@ -78,9 +71,7 @@ class BaseSpider(object):
         :param content:
         :return:
         """
-        return hashlib.sha1(
-            content.encode(encoding="utf-8", errors="ignore")
-        ).hexdigest()
+        return hashlib.sha1(content.encode(encoding="utf-8", errors="ignore")).hexdigest()
 
     @staticmethod
     async def save(data):
@@ -91,30 +82,20 @@ class BaseSpider(object):
         """
         await save.produce(save.save_queue, data=data)
 
-    async def update_resource(
-        self, status: int = enums.ResourceRefreshStatus.SUCCESS.value
-    ):
+    async def update_resource(self, status: int = enums.ResourceRefreshStatus.SUCCESS.value):
         patch_data = {"refresh_status": status}
 
         # 正在刷新时不更新刷新时间
         if status != enums.ResourceRefreshStatus.RUNNING.value:
-            patch_data["last_refresh_time"] = datetime.datetime.strftime(
-                datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S"
-            )
+            patch_data["last_refresh_time"] = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S")
 
         req = await self.loop.run_in_executor(
-            executor,
-            send_req,
-            "patch",
-            reverse(viewname="resource-detail", args=[self.resource_id]),
-            patch_data,
+            executor, send_req, "patch", reverse(viewname="resource-detail", args=[self.resource_id]), patch_data
         )
         if req.status_code == 200:
             logger.info(f"更新 id={self.resource_id} 订阅源刷新时间与状态成功")
         else:
-            logger.error(
-                f"更新 id={self.resource_id} 订阅源刷新时间与状态失败，状态码 {req.status_code}，响应 {req.text}"
-            )
+            logger.error(f"更新 id={self.resource_id} 订阅源刷新时间与状态失败，状态码 {req.status_code}，响应 {req.text}")
 
     async def run(self):
         """

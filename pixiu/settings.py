@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
-
 import platform
 
 import environ
@@ -148,6 +147,20 @@ TOKEN = env.str("TOKEN")
 
 # 日志
 LOG_TYPE = env.list("LOG_TYPE", default=["console"])
+_fmt = "[%(asctime)s] [%(name)s:%(funcName)s:%(lineno)s] %(levelname)s %(message)s"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "console_fmt": {"()": "coloredlogs.ColoredFormatter", "format": _fmt, "datefmt": "%Y-%m-%d %H:%M:%S"}
+    },
+    "handlers": {"console": {"class": "logging.StreamHandler", "level": "DEBUG", "formatter": "console_fmt"}},
+    "loggers": {
+        "": {"handlers": ["console"], "level": "DEBUG"},
+        "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
+        "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
+    },
+}
 
 # Sentry
 SENTRY_DSN = env.str("SENTRY_DSN", default="")

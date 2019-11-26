@@ -6,33 +6,27 @@ import logging
 import re
 
 import pytz
-from apscheduler.events import (
-    EVENT_JOB_MAX_INSTANCES,
-    EVENT_JOB_ERROR,
-    EVENT_JOB_MISSED,
-)
+from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
-from loguru import logger
 from rest_framework.reverse import reverse
 
 from backend.pipelines import save
 from utils import enums
 from utils.http_req import send_req
-from utils.log import init_log
 
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("django.request").setLevel(logging.ERROR)
+logging.getLogger("urllib3").setLevel(logging.ERROR)
+logger = logging.getLogger(__name__)
 spider_id_pattern = re.compile(r"\((\d+),(\d+)\)$")
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
 
 
 async def fetch_resource_list(loop):
-    req = await loop.run_in_executor(
-        executor, send_req, "get", reverse(viewname="resource-list")
-    )
+    req = await loop.run_in_executor(executor, send_req, "get", reverse(viewname="resource-list"))
     if req.status_code == 200:
-        logger.trace("请求/api/resource/成功")
+        logger.debug("请求/api/resource/成功")
         return req
     else:
         msg = f"resource API请求失败 {req.json()}"
@@ -68,9 +62,7 @@ def spider_listener(event):
                 logger.warning(msg)
                 post_data = {"message": msg, "level": 3, "spider": spider_id}
 
-            req = send_req(
-                method="post", url=reverse(viewname="spider-event-list"), data=post_data
-            )
+            req = send_req(method="post", url=reverse(viewname="spider-event-list"), data=post_data)
             if req.status_code == 201:
                 logger.info("任务异常事件上报成功")
             else:
@@ -80,9 +72,7 @@ def spider_listener(event):
                 method="patch",
                 url=reverse(viewname="resource-detail", args=[resource_id]),
                 data={
-                    "last_refresh_time": datetime.datetime.strftime(
-                        datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S"
-                    ),
+                    "last_refresh_time": datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S"),
                     "refresh_status": enums.ResourceRefreshStatus.FAIL.value,
                 },
             )
@@ -93,7 +83,7 @@ def spider_listener(event):
         else:
             logger.error(f"任务id中不存在爬虫id {event}")
     except Exception as e:
-        logger.opt(exception=True).error(f"处理任务异常时出错 {e}")
+        logger.exception(f"处理任务异常时出错 {e}")
 
 
 async def refresh_task(loop, scheduler: AsyncIOScheduler):
@@ -146,10 +136,7 @@ async def refresh_task(loop, scheduler: AsyncIOScheduler):
             "auth_value": auth_value,
         }
 
-        if status in (
-            enums.ResourceRefreshStatus.NEVER.value,
-            enums.ResourceRefreshStatus.FAIL.value,
-        ):
+        if status in (enums.ResourceRefreshStatus.NEVER.value, enums.ResourceRefreshStatus.FAIL.value):
             next_run_time = datetime.datetime.now(tz=pytz.UTC)
         elif status == enums.ResourceRefreshStatus.RUNNING.value:
             continue
@@ -160,9 +147,7 @@ async def refresh_task(loop, scheduler: AsyncIOScheduler):
 
         job = scheduler.get_job(job_id=task_id)
         if job:
-            job.modify(
-                next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC))
-            )
+            job.modify(next_run_time=max(next_run_time, datetime.datetime.now(tz=pytz.UTC)))
         else:
             scheduler.add_job(
                 func=spider_class.get_spider(**task_data),
@@ -191,18 +176,12 @@ async def init_task(loop):
         if status == enums.ResourceRefreshStatus.RUNNING.value:
             patch_data = {"refresh_status": enums.ResourceRefreshStatus.FAIL.value}
             req = await loop.run_in_executor(
-                executor,
-                send_req,
-                "patch",
-                reverse(viewname="resource-detail", args=[resource_id]),
-                patch_data,
+                executor, send_req, "patch", reverse(viewname="resource-detail", args=[resource_id]), patch_data
             )
             if req.status_code == 200:
                 logger.info(f"重置 {resource_name} 订阅源状态成功")
             else:
-                logger.error(
-                    f"重置 {resource_name} 订阅源状态失败，状态码 {req.status_code}，响应 {req.text}"
-                )
+                logger.error(f"重置 {resource_name} 订阅源状态失败，状态码 {req.status_code}，响应 {req.text}")
 
 
 def run():
@@ -210,14 +189,10 @@ def run():
     后端爬虫入口
     :return:
     """
-    init_log()
     loop = asyncio.get_event_loop()
     scheduler = AsyncIOScheduler()
 
-    scheduler.add_listener(
-        spider_listener,
-        mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED,
-    )
+    scheduler.add_listener(spider_listener, mask=EVENT_JOB_MAX_INSTANCES | EVENT_JOB_ERROR | EVENT_JOB_MISSED)
 
     asyncio.ensure_future(init_task(loop=loop), loop=loop)
 

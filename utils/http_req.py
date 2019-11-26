@@ -1,12 +1,13 @@
+import logging
 from urllib.parse import urljoin
 
-from loguru import logger
 from rest_framework.test import RequestsClient
 
 from pixiu.settings import TOKEN
 
 client = RequestsClient()
 base_url = "http://testserver/"
+logger = logging.getLogger(__name__)
 
 
 def send_req(method: str, url: str, data: dict = None, headers: dict = None):

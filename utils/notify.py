@@ -1,13 +1,10 @@
-import requests
-from loguru import logger
+import logging
 
-from pixiu.settings import (
-    MAIL_RECIPIENTS,
-    MAIL_API_KEY,
-    SERVERCHAN_KEY,
-    MAIL_SENDER,
-    MAIL_DOMAIN,
-)
+import requests
+
+from pixiu.settings import MAIL_RECIPIENTS, MAIL_API_KEY, SERVERCHAN_KEY, MAIL_SENDER, MAIL_DOMAIN
+
+logger = logging.getLogger(__name__)
 
 
 def send_wechat(title, content=""):
@@ -21,7 +18,7 @@ def send_wechat(title, content=""):
             logger.error(f"Send wechat error: {sc_req.json()}")
             return False
     except Exception as e:
-        logger.opt(exception=True).error(f"ServerChan push failed: {e}")
+        logger.exception(f"ServerChan push failed: {e}")
         return False
 
 
@@ -29,12 +26,7 @@ def send_mail(content, sub="DNSLog发来贺电", recipients=MAIL_RECIPIENTS):
     url = f"https://api.mailgun.net/v3/{MAIL_DOMAIN}/messages"
 
     # 您需要登录Mailgun创建API_USER，使用API_USER和API_KEY才可以进行邮件的发送。
-    data = {
-        "from": f"Pixiu {MAIL_SENDER}",
-        "to": recipients,
-        "subject": sub,
-        "html": content,
-    }
+    data = {"from": f"Pixiu {MAIL_SENDER}", "to": recipients, "subject": sub, "html": content}
     auth = ("api", MAIL_API_KEY)
 
     try:
@@ -45,5 +37,5 @@ def send_mail(content, sub="DNSLog发来贺电", recipients=MAIL_RECIPIENTS):
             logger.error(f"Send mail error: {mail_req.json()}")
             return False
     except Exception as e:
-        logger.opt(exception=True).error(f"Mailgun push failed: {e}")
+        logger.exception(f"Mailgun push failed: {e}")
         return False
