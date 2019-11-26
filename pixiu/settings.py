@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/1.11/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.11/ref/settings/
 """
+import os
 import platform
 
 import environ
@@ -147,16 +148,35 @@ TOKEN = env.str("TOKEN")
 
 # 日志
 LOG_TYPE = env.list("LOG_TYPE", default=["console"])
-_fmt = "[%(asctime)s] [%(name)s:%(funcName)s:%(lineno)s] %(levelname)s %(message)s"
+
+_fmt = "%(asctime)s | %(levelname)-8s | %(name)s:%(funcName)s:%(lineno)s - %(message)s"
+
+log_file = f"{BASE_DIR}/logs/pixiu.log"
+log_dir = os.path.split(log_file)[0]
+if not os.path.exists(log_dir):
+    os.mkdir(log_dir)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
     "formatters": {
-        "console_fmt": {"()": "coloredlogs.ColoredFormatter", "format": _fmt, "datefmt": "%Y-%m-%d %H:%M:%S"}
+        "console_fmt": {"()": "coloredlogs.ColoredFormatter", "format": _fmt, "datefmt": "%Y-%m-%d %H:%M:%S"},
+        "file_fmt": {"format": _fmt, "datefmt": "%Y-%m-%d %H:%M:%S"},
     },
-    "handlers": {"console": {"class": "logging.StreamHandler", "level": "DEBUG", "formatter": "console_fmt"}},
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "level": "DEBUG", "formatter": "console_fmt"},
+        "file": {
+            "class": "logging.handlers.TimedRotatingFileHandler",
+            "level": "INFO",
+            "formatter": "file_fmt",
+            "filename": log_file,
+            "encoding": "utf-8",
+            "when": "midnight",
+            "backupCount": 5,
+        },
+    },
     "loggers": {
-        "": {"handlers": ["console"], "level": "DEBUG"},
+        "": {"handlers": LOG_TYPE, "level": "DEBUG"},
         "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
     },
