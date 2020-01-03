@@ -26,17 +26,16 @@ from apps.resource.views import ResourceViewSet, ResourceCategoryViewSet
 from apps.spider.views import SpiderViewSet, SpiderEventViewSet
 
 router = routers.DefaultRouter()
-router.register(r'article', ArticleViewSet, base_name="article")
-router.register(r'article-category', ArticleCategoryViewSet, base_name="article-category")
-router.register(r'resource', ResourceViewSet, base_name='resource')
-router.register(r'resource-category', ResourceCategoryViewSet, base_name='resource-category')
-router.register(r'spider', SpiderViewSet, base_name='spider')
-router.register(r'spider-event', SpiderEventViewSet, base_name='spider-event')
+router.register(r"article", ArticleViewSet, basename="article")
+router.register(r"article-category", ArticleCategoryViewSet, basename="article-category")
+router.register(r"resource", ResourceViewSet, basename="resource")
+router.register(r"resource-category", ResourceCategoryViewSet, basename="resource-category")
+router.register(r"spider", SpiderViewSet, basename="spider")
+router.register(r"spider-event", SpiderEventViewSet, basename="spider-event")
 
 urlpatterns = [
-    path('api/', include(router.urls)),
-
-    path('admin/', admin.site.urls),
-    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
-    path('rss/<str:source_name>/', ArticleFeed())
+    path("api/", include(router.urls)),
+    path("admin/", admin.site.urls),
+    path("api-token-auth/", obtain_auth_token, name="api_token_auth"),
+    path("rss/<str:source_name>/", ArticleFeed()),
 ]
