@@ -21,5 +21,5 @@ graceful_timeout = 3
 
 # remoteIP - 请求时间 请求行 状态码 返回值长度 "referer" "UA"
 accesslog = "-"
-access_log_format = '%(h)s %(l)s %(t)s %(r)s %(s)s %(b)s "%(f)s" "%(a)s"'
+access_log_format = '%({X-Real-IP}i)s %(l)s %(t)s %(r)s %(s)s %(b)s "%(f)s" "%(a)s"'
 loglevel = "info"
