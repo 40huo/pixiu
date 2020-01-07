@@ -176,7 +176,7 @@ LOGGING = {
         },
     },
     "loggers": {
-        "": {"handlers": LOG_TYPE, "level": "DEBUG"},
+        "": {"handlers": LOG_TYPE, "level": "DEBUG" if DEBUG else "INFO"},
         "django": {"handlers": ["console"], "level": "INFO", "propagate": False},
         "django.request": {"handlers": ["console"], "level": "ERROR", "propagate": False},
     },

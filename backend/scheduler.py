@@ -18,6 +18,7 @@ from utils.http_req import send_req
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("django.request").setLevel(logging.ERROR)
 logging.getLogger("urllib3").setLevel(logging.ERROR)
+logging.getLogger("chardet").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 spider_id_pattern = re.compile(r"\((\d+),(\d+)\)$")
 executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
