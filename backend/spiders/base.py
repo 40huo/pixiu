@@ -2,6 +2,7 @@ import datetime
 import hashlib
 import logging
 
+from aiohttp import ClientConnectorError
 from rest_framework.reverse import reverse
 
 from backend.pipelines import save
@@ -59,6 +60,9 @@ class BaseSpider(object):
                 return None
         except UnicodeDecodeError:
             logger.error(f"Decode error: {url}")
+            return None
+        except ClientConnectorError:
+            logger.error(f"连接失败 {url}")
             return None
         except Exception as e:
             logger.exception(f"未知错误 {e}")
