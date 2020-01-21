@@ -5,7 +5,7 @@ import logging
 from lxml.html.clean import Cleaner
 from rest_framework.reverse import reverse
 
-from utils.http_req import send_req
+from utils.http_req import send_req, thread_executor
 
 logger = logging.getLogger(__name__)
 save_queue = asyncio.Queue(maxsize=1024)
@@ -69,8 +69,6 @@ async def consume(loop, queue):
     消费队列数据
     :return:
     """
-    from backend.scheduler import executor
-
     while True:
         data = await queue.get()
         logger.debug(f"读取存储队列 {data.title}")
@@ -78,7 +76,7 @@ async def consume(loop, queue):
         post_data = data.__dict__
         post_data["pub_time"] = datetime.datetime.strftime(data.pub_time, "%Y-%m-%dT%H:%M:%S")
 
-        req = await loop.run_in_executor(executor, send_req, "post", reverse(viewname="article-list"), post_data)
+        req = await loop.run_in_executor(thread_executor, send_req, "post", reverse(viewname="article-list"), post_data)
         if req.status_code == 201:
             logger.info(f"存储成功 {data.title}")
         elif req.status_code == 400:

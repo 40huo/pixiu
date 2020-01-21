@@ -1,5 +1,4 @@
 import asyncio
-import concurrent.futures
 import datetime
 import importlib
 import logging
@@ -9,11 +8,10 @@ import pytz
 from apscheduler.events import EVENT_JOB_MAX_INSTANCES, EVENT_JOB_ERROR, EVENT_JOB_MISSED
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from django.utils.dateparse import parse_datetime
-from rest_framework.reverse import reverse
 
 from backend.pipelines import save
 from utils import enums
-from utils.http_req import send_req
+from utils.http_req import api_report_spider_event, api_update_resource, api_fetch_resource_list
 
 logging.getLogger("apscheduler").setLevel(logging.WARNING)
 logging.getLogger("django.request").setLevel(logging.ERROR)
@@ -21,18 +19,6 @@ logging.getLogger("urllib3").setLevel(logging.ERROR)
 logging.getLogger("chardet").setLevel(logging.ERROR)
 logger = logging.getLogger(__name__)
 spider_id_pattern = re.compile(r"\((\d+),(\d+)\)$")
-executor = concurrent.futures.ThreadPoolExecutor(max_workers=10)
-
-
-async def fetch_resource_list(loop):
-    req = await loop.run_in_executor(executor, send_req, "get", reverse(viewname="resource-list"))
-    if req.status_code == 200:
-        logger.debug("请求/api/resource/成功")
-        return req
-    else:
-        msg = f"resource API请求失败 {req.json()}"
-        logger.error(msg)
-        raise Exception(msg)
 
 
 def spider_listener(event):
@@ -49,38 +35,29 @@ def spider_listener(event):
             if event.code == EVENT_JOB_ERROR:
                 msg = f"任务 {event.job_id} 出现异常 {event.traceback}"
                 logger.error(msg)
-                post_data = {"message": msg, "level": 4, "spider": spider_id}
+                level = 4
             elif event.code == EVENT_JOB_MISSED:
                 msg = f"任务 {event.job_id} 错过执行时间 {event.scheduled_run_time}"
                 logger.warning(msg)
-                post_data = {"message": msg, "level": 3, "spider": spider_id}
+                level = 3
             elif event.code == EVENT_JOB_MAX_INSTANCES:
                 msg = f"任务 {event.job_id} 达到最大同时执行数量"
                 logger.warning(msg)
-                post_data = {"message": msg, "level": 3, "spider": spider_id}
+                level = 3
             else:
                 msg = f"任务 {event.job_id} 出现未知异常"
                 logger.warning(msg)
-                post_data = {"message": msg, "level": 3, "spider": spider_id}
+                level = 3
 
-            req = send_req(method="post", url=reverse(viewname="spider-event-list"), data=post_data)
-            if req.status_code == 201:
-                logger.info("任务异常事件上报成功")
-            else:
-                logger.warning(f"任务异常事件上报失败，状态码 {req.status_code}，响应详情 {req.text}")
+            asyncio.ensure_future(api_report_spider_event(level=level, message=msg, spider_id=spider_id))
 
-            req = send_req(
-                method="patch",
-                url=reverse(viewname="resource-detail", args=[resource_id]),
-                data={
-                    "last_refresh_time": datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S"),
-                    "refresh_status": enums.ResourceRefreshStatus.FAIL.value,
-                },
+            asyncio.ensure_future(
+                api_update_resource(
+                    refresh_status=enums.ResourceRefreshStatus.FAIL.value,
+                    last_refresh_time=datetime.datetime.now(),
+                    resource_id=resource_id,
+                )
             )
-            if req.status_code == 200:
-                logger.info("更新订阅源状态成功")
-            else:
-                logger.warning(f"更新订阅源状态失败，状态码 {req.status_code}，响应详情 {req.text}")
         else:
             logger.error(f"任务id中不存在爬虫id {event}")
     except Exception as e:
@@ -94,8 +71,7 @@ async def refresh_task(loop, scheduler: AsyncIOScheduler):
     :param scheduler: apscheduler
     :return:
     """
-    req = await fetch_resource_list(loop=loop)
-    result = req.json()
+    result = await api_fetch_resource_list(loop=loop)
     for resource in result:
         is_enabled = resource.get("is_enabled")
         if not is_enabled:
@@ -168,21 +144,19 @@ async def init_task(loop):
     :param loop: 协程loop
     :return:
     """
-    req = await fetch_resource_list(loop=loop)
-    result = req.json()
+    result = await api_fetch_resource_list(loop=loop)
     for resource in result:
         status = resource.get("refresh_status")
         resource_id = resource.get("id")
         resource_name = resource.get("name")
         if status == enums.ResourceRefreshStatus.RUNNING.value:
-            patch_data = {"refresh_status": enums.ResourceRefreshStatus.FAIL.value}
-            req = await loop.run_in_executor(
-                executor, send_req, "patch", reverse(viewname="resource-detail", args=[resource_id]), patch_data
+            is_success = await api_update_resource(
+                resource_id=resource_id, refresh_status=enums.ResourceRefreshStatus.FAIL.value
             )
-            if req.status_code == 200:
+            if is_success:
                 logger.info(f"重置 {resource_name} 订阅源状态成功")
             else:
-                logger.error(f"重置 {resource_name} 订阅源状态失败，状态码 {req.status_code}，响应 {req.text}")
+                logger.error(f"重置 {resource_name} 订阅源状态失败")
 
 
 def run():
@@ -215,6 +189,5 @@ def run():
         loop.run_forever()
     except KeyboardInterrupt:
         logger.info(f"退出......")
-        executor.shutdown(wait=False)
         scheduler.shutdown(wait=False)
         loop.close()

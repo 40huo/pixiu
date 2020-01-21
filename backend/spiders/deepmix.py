@@ -11,7 +11,7 @@ from requests.adapters import HTTPAdapter
 from backend.pipelines import save
 from backend.spiders.base import BaseSpider
 from utils import enums
-from ..scheduler import executor
+from utils.http_req import thread_executor
 
 logger = logging.getLogger(__name__)
 
@@ -256,10 +256,10 @@ class DeepMixSpider(BaseSpider):
 
     async def run(self):
         await self.update_resource(status=enums.ResourceRefreshStatus.RUNNING.value)
-        is_session_success = await self.loop.run_in_executor(executor, self.__verify_session, "")
+        is_session_success = await self.loop.run_in_executor(thread_executor, self.__verify_session, "")
         if is_session_success:
             for zone in ("pay/user_area.php?q_ea_id=10001",):
-                data_list = await self.loop.run_in_executor(executor, self.parse_list, zone)
+                data_list = await self.loop.run_in_executor(thread_executor, self.parse_list, zone)
                 if len(data_list):
                     logger.info(f"运行结束，抓取到 {len(data_list)} 条暗网数据")
 

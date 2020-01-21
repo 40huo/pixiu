@@ -3,12 +3,10 @@ import hashlib
 import logging
 
 from aiohttp import ClientConnectorError
-from rest_framework.reverse import reverse
 
 from backend.pipelines import save
-from backend.scheduler import executor
 from utils import enums
-from utils.http_req import send_req
+from utils.http_req import api_update_resource
 
 logger = logging.getLogger(__name__)
 
@@ -93,13 +91,9 @@ class BaseSpider(object):
         if status != enums.ResourceRefreshStatus.RUNNING.value:
             patch_data["last_refresh_time"] = datetime.datetime.strftime(datetime.datetime.now(), "%Y-%m-%dT%H:%M:%S")
 
-        req = await self.loop.run_in_executor(
-            executor, send_req, "patch", reverse(viewname="resource-detail", args=[self.resource_id]), patch_data
+        await api_update_resource(
+            resource_id=self.resource_id, refresh_status=status, last_refresh_time=datetime.datetime.now()
         )
-        if req.status_code == 200:
-            logger.info(f"更新 id={self.resource_id} 订阅源刷新时间与状态成功")
-        else:
-            logger.error(f"更新 id={self.resource_id} 订阅源刷新时间与状态失败，状态码 {req.status_code}，响应 {req.text}")
 
     async def run(self):
         """
