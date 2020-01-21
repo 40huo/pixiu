@@ -106,10 +106,10 @@ async def api_update_resource(
     )
 
     if req.status_code == 200:
-        logger.info("更新订阅源状态成功")
+        logger.info(f"更新 id={resource_id} 订阅源状态成功")
         return True
     else:
-        logger.warning(f"更新订阅源状态失败，状态码 {req.status_code}，响应详情 {req.text}")
+        logger.warning(f"更新 id={resource_id} 订阅源状态失败，状态码 {req.status_code}，响应详情 {req.text}")
         return False
 
 
@@ -124,9 +124,9 @@ async def api_fetch_resource_list(loop: asyncio.AbstractEventLoop = None) -> dic
 
     req = await loop.run_in_executor(thread_executor, send_req, "get", reverse(viewname="resource-list"))
     if req.status_code == 200:
-        logger.debug("请求/api/resource/成功")
+        logger.debug("请求订阅源列表成功")
         return req.json()
     else:
-        msg = f"resource API请求失败 {req.json()}"
+        msg = f"订阅源列表请求失败 {req.json()}"
         logger.error(msg)
         raise Exception(msg)
